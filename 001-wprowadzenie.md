@@ -3,7 +3,7 @@
 
 ## Podstawowe informacje
 
-**k6** to narzędzie open-source do testów obciążeniowych (load testing) i wydajnościowych (performance testing). Umożliwia pisanie skryptów testowych w **JavaScript/ES6**, co pozwala łatwo modelować różne scenariusze użytkowników.
+**k6** to narzędzie open-source do testów obciążeniowych i wydajnościowych. Umożliwia pisanie skryptów testowych w **JavaScript/ES6**, co pozwala łatwo modelować różne scenariusze użytkowników.
 
 > W szybko zminiającym się ekosystemie JavaScript mamy kilka specyfikacji języka. k6 wykorzystuje silnik Goja (JS engine napisany w Go), który implementuje dużą część ECMAScript 5.1 i części ES6 (ECMAScript 2015). Z praktycznego punktu widzenia przyjmujemy, że skrypt k6 jest zgodny z ES6 (ECMAScript 2015). Najważniejsza różnica to brak obługi async/await.
 
@@ -14,7 +14,7 @@
 - generowanie metryk w czasie rzeczywistym
 - integracja z CI/CD
 - niska zajętość zasobów systemowych
-- możliwoć rozszerzania możliwosci poprzez doatkowe moduły
+- możliwoć rozszerzania możliwości poprzez doatkowe moduły
 
 Oficjalna strona: [https://k6.io/](https://k6.io/)  
 Repozytorium GitHub: [https://github.com/grafana/k6](https://github.com/grafana/k6)
@@ -31,14 +31,14 @@ Skrypt w k6 to plik JavaScript. Wymaganym elementem skryptu jest domyslnie ekspo
 import http from 'k6/http';
 
 export default function () {
-  const res = http.get('https://test.k6.io');
+  const res = http.get('https://quickpizza.grafana.com/');
 }
 ```
 
 W powyższym przykładzie:
 
 - Importujemy moduł `http`, który pozwala na wysyłanie żądań HTTP
-- Wykonujemy zapytanie GET na `https://test.k6.io`
+- Wykonujemy zapytanie GET na `https://quickpizza.grafana.com/`
 
 ---
 
@@ -105,7 +105,7 @@ k6 run skrypt.js
 
 > W k6 opcje zdefiniowane w kodzie będą nadpisane jesli podamy odpowiadajace im parametry w linii polecen przy uruchamianiu testów. 
 
-Więcej o konfiguracji przez `options`: [https://k6.io/docs/using-k6/options/](https://k6.io/docs/using-k6/options/)
+Więcej o konfiguracji przez `options`: [https://grafana.com/docs/k6/latest/using-k6/k6-options/](https://grafana.com/docs/k6/latest/using-k6/k6-options/)
 
 ---
 

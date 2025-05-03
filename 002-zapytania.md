@@ -1,100 +1,78 @@
-# WYsyłanie zapytań HTTPS
+# Wysyłanie zapytań HTTPS
 
-W tym materiale omówimy różne warianty żądań HTTP. Pokażemy obsługę różnych typów treści, parametryzację danych, aż po walidację odpowiedzi.
+W tej części omówię jak w k6 wysłać różne warianty zapytań HTTP oraz pokażę obsługę najczęściej spotykanych typów treści. Omówię również jak odczytać odpowiedź serwera oraz jak ją walidować.
 
 ---
 
-## 1. Wysyłanie żądań GET, POST, PUT, DELETE
+## Zapytanie GET
 
-Przyglądając się funkcjom i parametrom jakie udostępnia k6 mam wrażenie, że twórcom zależało na spójności z założeniami protokołu HTTP. W większości przypadków przesyłane dane muszą mieć format tekstu a i jesteśmy odpowiedzialni za ich właściwe przygotowanie. Wymaga to od nas podstawowej wiedzy o mechanizmach wykorzystywanych przez protoków HTTP ale dzięki możliwościom JavaScrpt napisanie kodu nie jest trudne.
+Najczęściej wykorzystywaną metodą protokołu HTTP jest metoda GET. Używamy jej do pobierania danych z serwera. Prosty przykład pokazujący wysłanie zapytania GET omówiliśmy już w poprzednim rozdziale. Teraz pokażę jak przesyłać w nim dodatkowe parametry.
 
-### GET
-
-Najczęściej wykorzystywaną funkcją protokołu HTTP jest GET. Używamy jej do pobierania danych z serwera. Podstawowy przykład pokazujący wysłanie zapytania GET omówiliśmy w poprzednim rozdziale. Teraz pokażemy jak przesyłać w nim dodatkowe parametry. Robimy to dodając po znaku `?` pary `klucz=wartość` oddzielone znakiem `&` do parametru url.
+Zaczniemy od wariantu, którym przesyłane parametry nie wymagają kodowania (w uproszczeniu nie zawierają spacji, znaków innych niż 0-9 a-z A-Z oraz znaków specjalnych). W takim przypadku możemy dodawać do adresu url znak `?` a następnie parametry w postaci `klucz=wartość` oddzielone znakiem `&`.
 
 ```javascript
 let url = 'https://jsonplaceholder.typicode.com/posts?userId=1&sort=desc';
 let res = http.get(url);
 ```
 
-Przykład ponieżej pokazuje, jak dołączać dynamiczne parametry korzystając z szablów stringów (template literals) JavaScript. Korzystając ze znaków \`\`\` (backticks) możemy łatwo wstawiać zmiennych do ciągów znaków.
+Przykład ponieżej pokazuje, jak dołączać dynamiczne parametry korzystając z szablów stringów (template literals) JavaScript. Korzystając ze znaków \`\` (backticks) możemy łatwo łączyć zmienne i teksty statyczne.
 
 ```javascript
 let userId = Math.floor(Math.random() * 10) + 1;
 let url = `https://jsonplaceholder.typicode.com/posts?userId=${userId}`;
 let res = http.get(url);
-check(res, { 'status jest 200': (r) => r.status === 200 });
 ```
 
-### POST
+Jeśli spodziewamy się danych wymagających zakodowania k6 dostarcza dedykowany mechanizm do budowania adresów URL. W tym celu wykorzystujemy klasę `URL` z modułu `k6/http`. Klasa ta pozwala na łatwe dodawanie parametrów do adresu URL oraz ich odpowiednie zakodowanie.
 
-W k6 funkcje http.post, http.put i inne metody HTTP oczekują, że dane przesyłane w ciele żądania będą w formacie tekstowym (string), jeśli używamy Content-Type: application/json. Oznacza to, że musimy jawnie zamienić obiekt JavaScript na JSON za pomocą JSON.stringify(), aby przesłać go jako treść żądania.
+```javascript
+import { URL } from 'https://jslib.k6.io/url/1.0.0/index.js';
 
-Nie ma wbudowanego wsparcia dla przesyłania obiektu JavaScript bezpośrednio jako JSON — dlatego ta konwersja jest konieczna. Jeśli jednak użyjemy innych Content-Type (np. multipart/form-data czy application/x-www-form-urlencoded), wtedy sposób przygotowania danych może być inny, ale dla JSON zawsze wymagana jest konwersja na string.
+const url = new URL('https://k6.io');
 
-Źródło: https://k6.io/docs/javascript-api/k6-http/post/
+url.searchParams.append('utm_medium', 'organic');
+url.searchParams.append('utm_source', 'test');
+url.searchParams.append('multiple', ['foo', 'bar']);
+
+const res = http.get(url.toString());
+// https://k6.io?utm_medium=organic&utm_source=test&multiple=foo%2Cbar
+
+```
+
+https://grafana.com/docs/k6/latest/examples/url-query-parameters/
+
+Dla kompletności dodam, że możemy też wykorzystać funkcję http.url jako tagged template literal jak pokazano na przykładzie poniżej.
 
 
-Tutaj wysyłamy dane w formacie JSON z nagłówkiem `Content-Type: application/json` i oczekujemy statusu 201 (utworzenie zasobu).
+```
+const specialValue = "a value with spaces & symbols";
+http.get(http.url`https://example.com?param=${specialValue}`);
+```
+
+Więcej informacji na temat tego podejścia możesz znaleźć pod linkiem [https://grafana.com/docs/k6/latest/javascript-api/k6-http/url/](https://grafana.com/docs/k6/latest/javascript-api/k6-http/url/).
+
+## Zapytania POST i PUT
+
+Chcąc przesłać dane do serwera wykorzystujemy metody POST lub PUT. Jeśli chcemy przesłać obiekt JSON będziemy musieli go przekonwertować na jego tekstową reprezentację. W JavaScript możemy to zrobić za pomocą funkcji JSON.stringify(). Wynikowy tekst załączamy do funkcji wysyłającej zapytanie. Musimy  pamiętać też, aby dodać informacje typie przesyłanych danych. Używamy do tego nagłówka `Content-Type`, który dla danych JSON ustawiamy na wartość `application/json`. Nagłówki oraz inne parametry zapytania dodajemy jako ostatni argument funkcji.
 
 ```javascript
 export default function () {
-    let payload = JSON.stringify({ title: 'foo', body: 'bar', userId: 1 });
-    let params = { headers: { 'Content-Type': 'application/json' } };
-    
+    let data =  { title: 'foo', body: 'bar', userId: 1 }
+    let payload = JSON.stringify(data);
+    let params = { headers: { 'Content-Type': 'application/json' } };    
     let res = http.post('https://jsonplaceholder.typicode.com/posts', payload, params);
-    check(res, {
-        'status jest 201': (r) => r.status === 201
-    });
 }
 ```
 
-Wysyła nowy zasób do serwera. Warto zauważyć, że obiekt `params` służy do przekazania dodatkowych ustawień żądania, takich jak nagłówki (więcej w dokumentacji: [https://k6.io/docs/javascript-api/k6-http/#params](https://k6.io/docs/javascript-api/k6-http/#params)), a ponieważ w HTTP przesyłamy dane jako tekst, obiekt danych musi zostać zamieniony na tekst przy użyciu `JSON.stringify()`.
-
-### PUT
-
-Wysyłamy zaktualizowane dane pod istniejący zasób (id=1) i oczekujemy statusu 200.
-
-```javascript
-export default function () {
-    let payload = JSON.stringify({ id: 1, title: 'foo updated', body: 'bar', userId: 1 });
-    let params = { headers: { 'Content-Type': 'application/json' } };
-
-    let res = http.put('https://jsonplaceholder.typicode.com/posts/1', payload, params);
-    check(res, {
-        'status jest 200': (r) => r.status === 200
-    });
-}
-```
-
-Aktualizuje istniejący zasób.
-
-### DELETE
-
-Żądanie DELETE usuwa wskazany zasób, a my weryfikujemy, czy odpowiedź miała status 200.
-
-```javascript
-export default function () {
-    let res = http.del('https://jsonplaceholder.typicode.com/posts/1');
-    check(res, {
-        'status jest 200': (r) => r.status === 200
-    });
-}
-```
-
-Usuwa zasób.
+Pozostałe parametry zapytań możesz poznać odwiedzając stronę [https://grafana.com/docs/k6/latest/javascript-api/k6-http/params/](https://grafana.com/docs/k6/latest/javascript-api/k6-http/params/).
 
 ---
 
-## 2. Obsługa różnych Content-Type (JSON, Form-data, Multipart)
-
-### JSON
-
-Wysyłanie JSON zostało pokazane wcześniej — używamy `JSON.stringify()` i nagłówka `Content-Type: application/json`.
+## Obsługa często spotykanych typów danych
 
 ### application/x-www-form-urlencoded
 
-Tutaj ręcznie budujemy zakodowany ciąg parametrów (łączenie par klucz=wartość przy użyciu encode) i ustawiamy odpowiedni nagłówek, aby serwer zinterpretował dane jako formularz przesłany metodą POST.
+Ten typ danych będzie nam potrzebny do symulowania wysyłania danych poprzez standardowy formularz na stronie www. Format danych jest zbliżony do parametrów wysyłanych w zapytaniu GET. Wykorzystamy jednak inny sposób jego kodowania. Dodatkowo ustawiamy odpowiedni nagłówek, aby serwer poprawnie zinterpretował dane.
 
 ```javascript
 import { encode } from 'k6/encoding';
@@ -104,17 +82,13 @@ export default function () {
     let params = { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } };
 
     let res = http.post('https://example.com/api/login', payload, params);
-    check(res, {
-        'status jest 200': (r) => r.status === 200
-    });
+
 }
 ```
 
-Przykład wysyłania danych w formacie `application/x-www-form-urlencoded`.
-
 ### multipart/form-data (upload pliku)
 
-Tutaj używamy `http.file()` do załączenia pliku — nagłówki `Content-Type` i `boundary` zostaną ustawione automatycznie przez k6. Zapytanie multipart/form-data składa się z części (każda z nagłówkiem Content-Disposition, opcjonalnym Content-Type oraz samą zawartością pliku lub danych) oddzielonych unikalnym boundary, co pozwala przesyłać pliki i inne dane w jednym żądaniu; każda część zawiera więc nagłówki opisujące parametry oraz treść przesyłanego elementu.
+Jeśli chcemy przesłać plik wykorzystamy funkcję `http.file()` do załączenia pliku — nagłówki `Content-Type` i `boundary` zostaną ustawione automatycznie przez k6. Zapytanie multipart/form-data składa się z części (każda z nagłówkiem Content-Disposition, opcjonalnym Content-Type oraz samą zawartością pliku lub danych) oddzielonych unikalnym boundary, co pozwala przesyłać pliki i inne dane w jednym żądaniu; każda część zawiera więc nagłówki opisujące parametry oraz treść przesyłanego elementu.
 
 ```javascript
 export default function () {
@@ -127,102 +101,64 @@ export default function () {
 }
 ```
 
-Przykład wysyłania pliku w formacie `multipart/form-data`.
+Bardziej zaawanowany przykład wysyłania zapytań multipart można znaleźć w dokumentacji pod adresem [https://grafana.com/docs/k6/latest/examples/data-uploads/](https://grafana.com/docs/k6/latest/examples/data-uploads/).
 
 ---
 
-## 3. Parametryzacja danych (CSV/JSON)
+## Przetwarzanie odpowiedzi
 
-### Parametryzacja z pliku JSON
+Być może zwróciłeś uwagę, że wynik działania funkcji `k6/http` zapisywałem do zmiennej. Jest tak dlatego, że zawiera on obiekt z informacjami o odpowiedzi serwera. Znajdziemy tam m.in status i treść odpowiedzi, które możemy wykorzystać do spawdzenia poprawności działania aplikacji jak i samego skryptu. 
 
-Tutaj wczytujemy dane z JSON-a i losujemy użytkownika, którego dane przesyłamy w żądaniu POST.
+### Wyświetalanie danych
 
-```json
-[
-    { "username": "user1", "password": "pass1" },
-    { "username": "user2", "password": "pass2" }
-]
-```
-
-**dane.json**
+Zanim przejdziemy do walidacji odpowiedzi, pokażę jak wyświetlić dane odpowiedzi w konsoli. Możemy to zrobić za pomocą funkcji `console.log()`.
 
 ```javascript
 import http from 'k6/http';
 import { check } from 'k6';
-import { SharedArray } from 'k6/data';
 
-const users = new SharedArray('users', function() {
-    return JSON.parse(open('./dane.json'));
-});
-
-export default function () {
-    let user = users[Math.floor(Math.random() * users.length)];
-    let payload = JSON.stringify(user);
-    let params = { headers: { 'Content-Type': 'application/json' } };
-
-    let res = http.post('https://example.com/api/login', payload, params);
-    check(res, {
-        'status jest 200': (r) => r.status === 200
-    });
+export default function(){
+    let res = http.get()
+    console.log(`Odpowiedź: ${res.body}`);
+    console.log(`Status: ${res.status}`);
 }
 ```
 
-Załadujemy dane użytkowników z pliku JSON i wybierzemy losowego użytkownika.
+Jeśli odpowiedź jest w formacie JSON możemy dodatkowo użyć `JSON.parse()` do przetworzenia jej z tekstu na obiekt JavaScript a dalej odwoływać się do jego pól. 
 
-### Parametryzacja z pliku CSV
-
-Tutaj wczytujemy dane z pliku CSV, mapujemy je na obiekty i losujemy jednego użytkownika do wysłania w żądaniu.
-
+```javascript
+import http from 'k6/http';
+export default function(){
+    let res = http.get('https://jsonplaceholder.typicode.com/posts/1')
+    let jsonResponse = JSON.parse(res.body);
+    console.log(`Tytuł: ${jsonResponse.title}`);
+}
 ```
-username,password
-user1,pass1
-user2,pass2
-```
 
-**dane.csv**
+### Walidacja odpowiedzi (checks)
+Wyświetlania danych odpowiedzi w konsoli to dobre rozwiązanie do na etapie tworzenia i debugowania skryptu. W czasie testowania chcielibyśmy aby wybrane elementy odpowiedzi były weryfikowane automatycznie a niepoprawne wyniki raportowne w statystykach testu.
+
+W k6 jest to możliwe dzięki funkcji `checks()`, która pozwalaja sprawdzić, czy odpowiedź HTTP lub inne dane spełniają określone kryteria. Każdy check zwraca `true` (zaliczony) lub `false` (niezaliczony) i jest rejestrowany jako **dodatkowa metryka (`checks`)** w raporcie testu.
+
+Funkcja `check()` przyjmuje dwa parametry: 
+- obiekt do sprawdzenia (np. `res` – odpowiedź HTTP)
+- obiekt z nazwami checków i funkcjami zwracającymi `true/false`
+Jest to konstrukcja bardziej złożona niż w przypadku `console.log()` ale warto ją opanować.
 
 ```javascript
 import http from 'k6/http';
 import { check } from 'k6';
-import { SharedArray } from 'k6/data';
-
-const csvData = new SharedArray('users', function() {
-    return open('./dane.csv')
-        .split('\n')
-        .slice(1)
-        .map(line => {
-            let parts = line.split(',');
-            return { username: parts[0], password: parts[1] };
-        });
-});
 
 export default function () {
-    let user = csvData[Math.floor(Math.random() * csvData.length)];
-    let payload = JSON.stringify(user);
-    let params = { headers: { 'Content-Type': 'application/json' } };
-
-    let res = http.post('https://example.com/api/login', payload, params);
-    check(res, {
-        'status jest 200': (r) => r.status === 200
-    });
+  const res = http.get('https://test.k6.io');
+  
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+  });
 }
 ```
 
-Załadujemy dane użytkowników z pliku CSV i również wybierzemy losowego użytkownika.
-
----
-
-## 4. Walidacja odpowiedzi (checks)
-
-Tutaj jeśli odpowiedź nie ma statusu 200, zostanie wypisany komunikat błędu do konsoli.
-
-```javascript
-if (!check(res, { 'status jest 200': (r) => r.status === 200 })) {
-    console.error(`Błąd: status ${res.status}`);
-}
-```
-
-Możliwe jest również logowanie nieudanych walidacji.
+Funkcja `check` pozwala definiować wiele asercje dla danej odpowiedzi. Kolejny przykład weryfikuje jednocześnie status odpowiedzi, obecność pola `userId` w odpowiedzi oraz czas trwania odpowiedzi.
 
 ```javascript
 check(res, {
@@ -232,14 +168,11 @@ check(res, {
 });
 ```
 
-Ten przykład weryfikuje jednocześnie status odpowiedzi, obecność pola `userId` w odpowiedzi oraz czas trwania odpowiedzi.
+Możliwe jest również logowanie nieudanych walidacji.
 
-Funkcja `check` pozwala definiować różne asercje na odpowiedzi.
+```javascript
+if (!check(res, { 'status jest 200': (r) => r.status === 200 })) {
+    console.error(`Błąd: status ${res.status}`);
+}
+```
 
----
-
-## Podsumowanie
-
-Ten moduł pokazuje jak korzystać z k6 do wysyłania różnych typów żądań HTTP, obsługi różnych typów treści, parametryzacji danych oraz walidacji odpowiedzi. Zachęcam do eksploracji oficjalnej dokumentacji: [https://k6.io/docs](https://k6.io/docs)
-
-Czy chciałbyś, żebym dodał jakieś dodatkowe przykłady lub rozwinął któryś z tematów?
