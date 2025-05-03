@@ -51,6 +51,8 @@ http.get(http.url`https://example.com?param=${specialValue}`);
 
 Więcej informacji na temat tego podejścia możesz znaleźć pod linkiem [https://grafana.com/docs/k6/latest/javascript-api/k6-http/url/](https://grafana.com/docs/k6/latest/javascript-api/k6-http/url/).
 
+---
+
 ## Zapytania POST i PUT
 
 Chcąc przesłać dane do serwera wykorzystujemy metody POST lub PUT. Jeśli chcemy przesłać obiekt JSON będziemy musieli go przekonwertować na jego tekstową reprezentację. W JavaScript możemy to zrobić za pomocą funkcji JSON.stringify(). Wynikowy tekst załączamy do funkcji wysyłającej zapytanie. Musimy  pamiętać też, aby dodać informacje typie przesyłanych danych. Używamy do tego nagłówka `Content-Type`, który dla danych JSON ustawiamy na wartość `application/json`. Nagłówki oraz inne parametry zapytania dodajemy jako ostatni argument funkcji.
@@ -70,6 +72,10 @@ Pozostałe parametry zapytań możesz poznać odwiedzając stronę [https://graf
 
 ## Obsługa często spotykanych typów danych
 
+Mimo, że w większości przypadków przesyłamy dane w formacie JSON, czasami będziemy musieli obsłużyć inne typy danych. W tej sekcji omówię najczęściej spotykane z nich.
+
+---
+
 ### application/x-www-form-urlencoded
 
 Ten typ danych będzie nam potrzebny do symulowania wysyłania danych poprzez standardowy formularz na stronie www. Format danych jest zbliżony do parametrów wysyłanych w zapytaniu GET. Wykorzystamy jednak inny sposób jego kodowania. Dodatkowo ustawiamy odpowiedni nagłówek, aby serwer poprawnie zinterpretował dane.
@@ -85,6 +91,8 @@ export default function () {
 
 }
 ```
+
+---
 
 ### multipart/form-data (upload pliku)
 
@@ -108,6 +116,8 @@ Bardziej zaawanowany przykład wysyłania zapytań multipart można znaleźć w 
 ## Przetwarzanie odpowiedzi
 
 Być może zwróciłeś uwagę, że wynik działania funkcji `k6/http` zapisywałem do zmiennej. Jest tak dlatego, że zawiera on obiekt z informacjami o odpowiedzi serwera. Znajdziemy tam m.in status i treść odpowiedzi, które możemy wykorzystać do spawdzenia poprawności działania aplikacji jak i samego skryptu. 
+
+---
 
 ### Wyświetalanie danych
 
@@ -134,6 +144,8 @@ export default function(){
     console.log(`Tytuł: ${jsonResponse.title}`);
 }
 ```
+
+---
 
 ### Walidacja odpowiedzi (checks)
 Wyświetlania danych odpowiedzi w konsoli to dobre rozwiązanie do na etapie tworzenia i debugowania skryptu. W czasie testowania chcielibyśmy aby wybrane elementy odpowiedzi były weryfikowane automatycznie a niepoprawne wyniki raportowne w statystykach testu.
@@ -175,4 +187,3 @@ if (!check(res, { 'status jest 200': (r) => r.status === 200 })) {
     console.error(`Błąd: status ${res.status}`);
 }
 ```
-
