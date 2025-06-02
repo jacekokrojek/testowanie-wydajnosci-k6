@@ -4,7 +4,7 @@ W repozytorium znajdziesz materiały, które pomogą Ci rozpocząć pracę z nar
 
 ## Przygotowanie
 
-Przed warsztatem zapoznaj się z [instrukcją](./000-installation-and-verification.md) zawierającą informacje o wymaganym oprogramowaniu oraz połączeniach. Zachęcam też do zapoznania się z [podstawami języka JavaScript](./A-podstawy-JS.md), które pomogą w zrozumieniu materiału oraz pisaniu własnych testów. Jeśli planujesz budowanie rozproszonego środowiska do testów zapoznaj się też z podstawami pracy w [środowisku k8s](./B-podstawy-k8s.md)
+Przed warsztatem zapoznaj się z [instrukcją](./000-installation-and-verification.md) zawierającą informacje o wymaganym oprogramowaniu oraz połączeniach. Zachęcam też do zapoznania się z [podstawami języka JavaScript](./A-podstawy-JS.md), które pomogą w zrozumieniu materiału oraz pisaniu własnych testów. Jeśli planujesz budowanie rozproszonego środowiska do testów zapoznaj się też z podstawami pracy w [środowisku k8s](./B-podstawy-k8s.md).
 
 ## Agenda
 
@@ -19,14 +19,12 @@ Przed warsztatem zapoznaj się z [instrukcją](./000-installation-and-verificati
 
 ### Część 2
 * [Praca z XML](part-2/230-xml.md)
-* [Nagrywanie zapytań](part-2/210-nagrywanie-zapytan.md)
-* [Praca z k6 Studio](part-2/220-k6-browser.md)
-* [Testy z wykorzystaniem przeglądarki]()
-* [Docker i k6]()
-* [Testy rozproszone]()
-* [TypeScript]()
-* [Integracje]()
+* [Nagrywanie zapytań i konwersja HAR do skryptu k6](part-2/210-nagrywanie-zapytan.md)
+* [Praca z k6 Studio](part-2/230-k6-studio.md)
+* [Testy z wykorzystaniem przeglądarki](part-2/220-k6-browser.md)
+* [Docker i k6](part-2/250-running-in-docker.md)
+* [Budowanie rozproszonego środowiska do testów](part-2/260-distributed-testing.md)
 * [Biblioteki i inne możliwości k6]()
 
-
+Jeśli czujesz niedosyt zachęcam Cię do odwiedzenia repozytorium [Awsome k6](https://github.com/grafana/awesome-k6)
 
