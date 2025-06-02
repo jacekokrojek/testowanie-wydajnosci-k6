@@ -31,7 +31,7 @@ To zapytanie odpowiada za tworzenie nowych użytkowników w systemie. Wysyłają
 
 **Opis zadania:**
 * Przygotuj zapytanie PUT do API Keycloak, które zresetuje hasło wybranego użytkownika.
-* Adres endpointa musi zawierać identyfikator użytkownika (`userId`).
+* Adres endpointa musi zawierać identyfikator użytkownika (`userId`). Możesz go pobrać przeszukując użytkowników zapytaniem GET na endpoint `users` z parametrem url `?username=<username>`
 * W treści żądania prześlij zmienione dane użytkownika.
 * Do żądania dodaj nagłówki `Content-Type: application/json` oraz `Authorization`.
 * **Adres URL:** `https://${hostname}/admin/realms/sample-app/users/${userId}/reset-password`
