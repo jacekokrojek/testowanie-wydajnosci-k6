@@ -19,10 +19,10 @@ Przed warsztatem zapoznaj się z [instrukcją](./000-installation-and-verificati
 
 ### Część 2
 * [Prezentacja wyników testów](part-2/280-result-output.md)
-* [Praca z XML](part-2/230-xml.md)
-* [Nagrywanie zapytań i konwersja HAR do skryptu k6](part-2/210-nagrywanie-zapytan.md)
+* [Praca z XML](part-2/210-xml.md)
+* [Nagrywanie zapytań i konwersja HAR do skryptu k6](part-2/220-nagrywanie-zapytan.md)
 * [Praca z k6 Studio](part-2/230-k6-studio.md)
-* [Testy z wykorzystaniem przeglądarki](part-2/220-k6-browser.md)
+* [Testy z wykorzystaniem przeglądarki](part-2/240-k6-browser.md)
 * [Docker i k6](part-2/250-running-in-docker.md)
 * [Budowanie rozproszonego środowiska do testów](part-2/260-distributed-testing.md)
 * [Grupowanie i tagowanie](part-2/270-tagowanie-i-grupowanie.md)
