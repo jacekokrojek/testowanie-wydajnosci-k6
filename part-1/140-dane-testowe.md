@@ -91,6 +91,7 @@ export default function () {
 Załadujemy dane użytkowników z pliku JSON i wybierzemy losowego użytkownika.
 ## Generowanie danych
 
+W materiale [Wprowadzienie do JavaScript](../A-podstawy-JS.md) omówiliśmy typowe sposoby do gerowania danych testowych w JavaScript. Poniżej znajdziesz przykład wykorzystnia zdalnego modułu i jego funkcji do generowania danych, które są podobne do danych rzeczywistych.
 ```javascript
 import faker from 'https://cdnjs.cloudflare.com/ajax/libs/Faker/3.1.0/faker.min.js';
 
@@ -107,10 +108,5 @@ https://github.com/farhanlabib/k6-faker-load-testing
 
 > W kolejnych lekcjach omówimy inny sposób na pobranie biblioteki, https://dev.to/k6/performance-testing-with-generated-data-using-k6-and-faker-2e
 
-
-
-TODO: pobieranie iteracji https://grafana.com/docs/k6/latest/using-k6/execution-context-variables/
----
-
-https://grafana.com/docs/k6/latest/examples/html-forms/
+TODO: pobieranie iteracji z https://grafana.com/docs/k6/latest/javascript-api/k6-execution/
 

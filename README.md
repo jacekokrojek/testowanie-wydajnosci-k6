@@ -18,12 +18,16 @@ Przed warsztatem zapoznaj się z [instrukcją](./000-installation-and-verificati
 * [Modelowanie obciążenia](part-1/160-modelowanie-obciazenia.md)
 
 ### Część 2
+* [Prezentacja wyników](part-2/270-result-output.md)
 * [Praca z XML](part-2/230-xml.md)
 * [Nagrywanie zapytań i konwersja HAR do skryptu k6](part-2/210-nagrywanie-zapytan.md)
 * [Praca z k6 Studio](part-2/230-k6-studio.md)
 * [Testy z wykorzystaniem przeglądarki](part-2/220-k6-browser.md)
 * [Docker i k6](part-2/250-running-in-docker.md)
 * [Budowanie rozproszonego środowiska do testów](part-2/260-distributed-testing.md)
+* [Grupowanie i tagowanie](part-2/270-tagowanie-i-grupowanie.md)
+* [Prezentacja wyników testów](part-2/280-result-output.md)
+* [Thresholds](part-2/290-tresholds.md)
 * [Biblioteki i inne możliwości k6]()
 
 Jeśli czujesz niedosyt zachęcam Cię do odwiedzenia repozytorium [Awsome k6](https://github.com/grafana/awesome-k6)

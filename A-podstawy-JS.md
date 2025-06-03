@@ -29,11 +29,10 @@ let powitanie = `Cześć, ${imie}!`;
 let czyPrawda = true;
 ```
 
-* Undefined, gry wartość zmiennej, która została zadeklarowana, ale nie została przypisana żadna wartość.
+* Undefined, dla zmiennej, która została zadeklarowana, ale nie została przypisana żadna wartość.
 
 ```js
 let x;
-console.log(x); // undefined
 ```
 * Null, który oznacza "brak wartości".
 
@@ -49,7 +48,7 @@ wiek = 31; // Błąd!
 
 ## 🎯 2. Funkcje
 
-Funkcje pozwalają grupować kod w logiczne bloki. Mogę też przyjmować parametry. W JavaScript możemy zdefiniować funkcję na kilka sposobów. Klasycznie robimy to z wykrozystaniem słowa kluczowego `function` po którym podajemy nazwę funkcji a w nawiasie listę parametrów.
+Funkcje pozwalają grupować kod w logiczne bloki. Mogę też przyjmować parametry. W JavaScript możemy zdefiniować funkcję na kilka sposobów. Klasycznie robimy to z wykrozystaniem słowa kluczowego `function`, po którym podajemy nazwę funkcji a w nawiasie listę parametrów. Poniżej funckja wyświetlająca imię, przekazane jako parametr.
 
 ```js
 function przywitaj(imie) {

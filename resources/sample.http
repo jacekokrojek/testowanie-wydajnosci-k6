@@ -1,0 +1,29 @@
+@BaseUrl = http://18.153.7.27:8001
+@Token = 1PBDHK5JEL1XFNNU13AVBG64ILEKRLUE:
+
+GET {{BaseUrl}}/api/products/?filter[name]=[Hummingbird printed t-shirt]
+Authorization: Basic {{Token}}
+
+###
+GET  {{BaseUrl}}/api/products/1
+Authorization: Basic {{Token}}
+###
+GET  {{BaseUrl}}/api/stock_availables/1
+Authorization: Basic {{Token}}
+### 
+PUT  {{BaseUrl}}/api/stock_availables/1
+Authorization: Basic {{Token}}
+Content-Type: application/xml
+
+<prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+  <stock_available>
+    <id>1</id>
+    <id_product>1</id_product>
+    <id_product_attribute>0</id_product_attribute> 
+    <id_shop>1</id_shop> 
+    <id_shop_group>0</id_shop_group> 
+    <depends_on_stock>0</depends_on_stock>
+    <out_of_stock>0</out_of_stock>
+    <quantity>600</quantity>
+  </stock_available>
+</prestashop>

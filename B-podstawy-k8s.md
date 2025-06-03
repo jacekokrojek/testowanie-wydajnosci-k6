@@ -76,7 +76,7 @@ aws eks update-kubeconfig --region eu-central-1 --name my-cluster
 Może sprawdzić czy poprawnie skonfiugurowałeś dostęp do klastra i jego zasoby poleceniem
 
 ```bash
-kubectl cluster-info
+kubectl cluster-info dump
 kubectl get nodes
 ```
 
@@ -152,9 +152,7 @@ To automatycznie:
 
 ---
 
-
 - 🔗 [Oficjalna dokumentacja Helm](https://helm.sh/docs/)
 - 🔗 [Repozytoria chartów na ArtifactHub](https://artifacthub.io)
-- 🔧 `helm create mychart` — komenda tworząca szkielet własnego charta
 
 ---
