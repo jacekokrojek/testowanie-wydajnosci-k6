@@ -107,10 +107,31 @@ oak-results.json | jq -s 'add/length'
 
 Dziękuję za pomoc Grześkowi Piechnikowi, autorowi artykułu [How to quickly read summary data in k6 from json file](https://medium.com/@gpiechnik/how-to-quick-read-summary-data-in-k6-from-json-file-f9d09bccd9c2), z którego zaczerpnięto pomysł.
 
-###
-Export do Promethus RW
+Podobnie możesz wykrzystać do analizy Powershell
+
+```powershell
+$values = Get-Content -Path "keycloak-results.json" | ForEach-Object {
+    $obj = $_ | ConvertFrom-Json
+    if (
+        $obj.type -eq "Point" -and
+        $obj.metric -eq "http_req_duration" -and
+        $obj.data.tags.name
+    ) {
+        $obj.data.value
+    }
+}
+
+# Oblicz średnią wartość
+$average = ($values | Measure-Object -Average).Average
+$average
+```
+### Integracje 
+
+K6 jest zoptymalizowana do eksporotowania wyników testów do zewnętrznych systemów i baz danych timeseries. Wśród dostępnych integracji znajdziesz najpopularniejsze rozwiązania na rynku. Integracja sprowadza się do wybrania odpowiedniego typu wyjściowego i sknfigurowanie parametrów. Poniżej przykład integracji z Promethus RW. Zwróć uwagę, że domyślnie wysyłany tylko jedną metrykę. Jeśli chcesz aby było ich więce musisz je wskazać.
+
 ```
 K6_PROMETHEUS_RW_SERVER_URL=http://localhost:9090/api/v1/write \
 K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),avg,min,max \
 k6 run -o experimental-prometheus-rw script.js
 ```
+
