@@ -5,26 +5,25 @@ Przed warsztatem z testowania w k6 zainstaluj poniższe komponenty a także spra
 ## Narzędzia
 * [Visual Studio Code](https://code.visualstudio.com/)
 * [Grafana k6](https://grafana.com/docs/k6/latest/set-up/install-k6/)
-opcjonalnie
-* [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
-* [Node.js](https://nodejs.org/en/) - najnowszą wersję LTS
+* [Google Chrome](https://www.google.com/chrome/)
+* [Dodatek Grafana k6 Browser Record](https://chromewebstore.google.com/search/grafana-k6-browser-record) 
 * [k6 Studio](https://grafana.com/docs/k6/latest/k6-studio/)
 
-## Połączenia
-Będziemy pracować z przeglądarką, najlepiej korzystać z Chrome lub FireFox oraz 
-* [Dodatek Grafana k6 Browser Record](https://chromewebstore.google.com/search/grafana-k6-browser-record) 
+opcjonalnie
+* [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
+
+## Weryfikacja połączeń
 
 Sprawdź czy możesz odwiedzić witryny 
-* https://3.71.14.30 (zignoruj informacje o niebezpiecznym certyfikacie)
-* http://3.71.14.30:3000
+* https://<ip> (zignoruj informacje o niebezpiecznym certyfikacie)
+* http://<ip>:3000
 * https://www.keycloak.org/
 * https://httpbin.org/
 
 Do częsci związanej z testami w trybie Distributed będzie nam potrzebny również:
 * Klient SSL (wystarczy klient wbudowany w Git Bash lub np. Putty)
 
-Sprawdź czy możesz zalogować się korzystając z poniższych danych:
+Sprawdź czy możesz zalogować się do serwera o adresie <ip> korzystając z poniższych poświadczeń:
 
-ip:3.71.14.30
 user:tester
 hasło:ckLkcoywf74jyDj

@@ -50,6 +50,26 @@ wiek = 31; // Błąd!
 
 Funkcje pozwalają grupować kod w logiczne bloki. Mogę też przyjmować parametry. W JavaScript możemy zdefiniować funkcję na kilka sposobów. Klasycznie robimy to z wykrozystaniem słowa kluczowego `function`, po którym podajemy nazwę funkcji a w nawiasie listę parametrów. Poniżej funckja wyświetlająca imię, przekazane jako parametr.
 
+Najprostrzą funkcją z jaka przyjdzie Ci pracować to funkcja wyświetlająca dane w konsoli.
+
+```Javascript
+console.log(`Cześć, ${imie}!`)
+```
+
+Kolejne funkcje jakie powinieneś znać to funkcje pozwalające na formatowanie tekstu. Poniżej znajdziesz kola przykładów.
+
+```javascript
+const num = 7;
+const formattedNum = num.toString().padStart(3, '0');
+console.log(formattedNum); // "007"
+
+const price = 3.14159;
+const formatterPrice = price.toFixed(2)
+console.log(formatterPrice); // "3.14"
+```
+
+Jeśli chcesz stworzć własną funkcję skorzystaj ze składni jak w przykładzie poniżej.
+
 ```js
 function przywitaj(imie) {
   console.log('Cześć, ' + imie + '!');
@@ -115,7 +135,6 @@ Instrukcje warunkowe korzystają z operatorów porównania, które zwracają war
 Operatory porównania:
 
 - `===` — porównuje wartość i typ zmiennych. Nazywany jest "ściśle równy" (strict equality).
-Przykład:
 - `!==` — porównuje nierówność wartości i typu (strict inequality).
 - `==` — porównuje wartości ale bez typu
 - `>` `<` `>=` `<=` — większe/mniejsze
@@ -123,6 +142,8 @@ Przykład:
 Wartości w warunkach są automatycznie konwertowane na typ logiczny (boolean) zgodnie z zasadą tzw. "truthy" i "falsy".
 Przykłady wartości falsy: 0, '' (pusty string), null, undefined, NaN, false.
 Wszystkie inne wartości są truthy, czyli traktowane jako true w warunkach.
+
+> Zwróć uwagę, że przy porównywaniu obiektów operator `==` nie będzie porównywał wartości obiektów a ich referencje. W większości przypadków jego użycie będzie nieodpowiednie.
 
 ## 🎯 4. Obiekty i ich właściwości
 
@@ -136,6 +157,15 @@ const osoba = {
 
 console.log(osoba.imie); // Jan
 console.log(osoba['wiek']); // 30
+```
+
+Warto w tym miejscu wspomnieć jak poprawnie wyświetlić przekonwertować obiekt na tekst i odwrotnie. Wykorzystujemy do tego obiekt JSON.
+
+```javascript
+console.log (JSON.stringify(osoba)); // bez formatowania
+console.log (JSON.stringify(osoba, null, 2)); // z wcięciami 2 znakowymi
+
+const options = JSON.parse("{value: 1}");
 ```
 
 ## 🎯 5. Tablice i iteracja
@@ -183,6 +213,27 @@ for (const owoc of owoce) {
 }
 ```
 
+Aby znaleźć konkretny element w tablicy, możesz użyć metody `find()`. Zwraca ona pierwszy element spełniający podany warunek lub `undefined`, jeśli taki element nie istnieje.
+
+Przykład: wyszukiwanie użytkownika o imieniu "Jan":
+
+```js
+const users = [
+  { imie: 'Anna', wiek: 28 },
+  { imie: 'Jan', wiek: 35 },
+  { imie: 'Maria', wiek: 22 }
+];
+
+const jan = users.find(user => user.imie === 'Jan');
+console.log(jan); // { imie: 'Jan', wiek: 35 }
+```
+
+Możesz też użyć `findIndex()`, aby znaleźć indeks elementu, lub `includes()` dla prostych tablic:
+
+```js
+const liczby = [1, 2, 3, 4];
+console.log(liczby.includes(3)); // true
+```
 ## 🎯 6. Moduły i import
 
 Od standardu ES6 (ECMAScript 2015) JavaScript wprowadził natywne wsparcie dla modułów. Moduły pozwalają na organizowanie kodu w osobne pliki, dzięki czemu można łatwo zarządzać dużymi projektami, importować i eksportować funkcje, zmienne czy klasy między plikami.
@@ -219,178 +270,20 @@ console.log(`Wersja: ${wersja}`);
 console.log(dodaj(5, 7)); // 12
 ```
 
-## 🎯 7. Generowanie danych testowych
-
-Podczas testowania wydajności w k6 często potrzebujemy generować dane testowe, takie jak losowe liczby, ciągi znaków czy obiekty. Oto kilka przykładów:
-
-### 🔢 Losowe liczby
-
-Generowanie losowej liczby w zakresie od 1 do 100:
-
-```js
-function losowaLiczba(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-console.log(losowaLiczba(1, 100)); // np. 42
-```
-
-### 🔤 Losowe ciągi znaków
-
-Generowanie losowego ciągu znaków o określonej długości:
-
-```js
-function losowyCiag(dlugosc) {
-  const znaki = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let wynik = '';
-  for (let i = 0; i < dlugosc; i++) {
-    wynik += znaki.charAt(Math.floor(Math.random() * znaki.length));
-  }
-  return wynik;
-}
-
-console.log(losowyCiag(10)); // np. 'aB3dE5FgH1'
-```
-
-### 🧑‍💻 Losowe dane użytkownika
-
-Tworzenie obiektu z losowymi danymi użytkownika:
-
-```js
-function losowyUzytkownik() {
-  return {
-    imie: losowyCiag(5),
-    wiek: losowaLiczba(18, 60),
-    email: `${losowyCiag(5)}@example.com`
-  };
-}
-
-console.log(losowyUzytkownik());
-// np. { imie: 'Xyz12', wiek: 34, email: 'Abc34@example.com' }
-```
-
-### 📋 Tablica losowych obiektów
-
-Generowanie tablicy z losowymi obiektami:
-
-```js
-function generujDaneTestowe(ilosc) {
-  const dane = [];
-  for (let i = 0; i < ilosc; i++) {
-    dane.push(losowyUzytkownik());
-  }
-  return dane;
-}
-
-console.log(generujDaneTestowe(3));
-// np. [
-//   { imie: 'Abc12', wiek: 25, email: 'Xyz34@example.com' },
-//   { imie: 'Def45', wiek: 40, email: 'Pqr56@example.com' },
-//   { imie: 'Ghi78', wiek: 30, email: 'Stu90@example.com' }
-// ]
-```
-
-Biblioteka [`faker`](https://github.com/faker-js/faker) pozwala łatwo generować realistyczne dane testowe, takie jak imiona, adresy e-mail czy numery telefonów. W k6 możesz użyć jej w następujący sposób:
-
-### 📦 Instalacja
-
-Aby użyć `faker` w k6, musisz najpierw zainstalować bibliotekę w swoim projekcie (np. za pomocą `npm`):
-
-```bash
-npm install @faker-js/faker
-```
-
-### 🛠️ Przykład użycia
-
-Poniżej przykład generowania losowych danych użytkownika:
-
-```js
-import { faker } from '@faker-js/faker';
-
-function losowyUzytkownik() {
-  return {
-    imie: faker.name.firstName(),
-    nazwisko: faker.name.lastName(),
-    email: faker.internet.email(),
-    adres: faker.address.streetAddress(),
-    telefon: faker.phone.number()
-  };
-}
-
-console.log(losowyUzytkownik());
-// np. {
-//   imie: 'Anna',
-//   nazwisko: 'Kowalska',
-//   email: 'anna.kowalska@example.com',
-//   adres: '123 Main Street',
-//   telefon: '123-456-7890'
-// }
-```
-
-### 📋 Generowanie wielu danych
-
-Możesz również wygenerować tablicę z wieloma losowymi użytkownikami:
-
-```js
-function generujUzytkownikow(ilosc) {
-  const uzytkownicy = [];
-  for (let i = 0; i < ilosc; i++) {
-    uzytkownicy.push(losowyUzytkownik());
-  }
-  return uzytkownicy;
-}
-
-console.log(generujUzytkownikow(5));
-// np. [
-//   { imie: 'Anna', nazwisko: 'Kowalska', email: 'anna.kowalska@example.com', ... },
-//   { imie: 'Jan', nazwisko: 'Nowak', email: 'jan.nowak@example.com', ... },
-//   ...
-// ]
-```
-
-👉 Biblioteka `faker` jest bardzo przydatna do generowania realistycznych danych testowych w skryptach k6.
-
 ## Zapisywanie danych do pliku
 ```javascript
-// Importujemy moduł 'fs' (file system) do obsługi plików
 const fs = require('fs');
 
-// Importujemy moduł 'path' do obsługi ścieżek plików
 const path = require('path');
-
-// Ustalamy ile użytkowników chcemy wygenerować
-const numUsers = 100;
-
-// Ustalamy nazwę i lokalizację pliku wynikowego
 const outputFile = path.join(__dirname, 'users.csv');
 
-// Tworzymy zmienną z nagłówkiem pliku CSV (pierwszy wiersz z nazwami kolumn)
-let csvContent = 'username,password\n';
+let csvContent = 'username,password\njacek,pas1234\ntosia,pas1234\n';
 
-// Używamy pętli, aby dodać dane 100 użytkowników
-for (let i = 1; i <= numUsers; i++) {
-    // Generujemy nazwę użytkownika w formacie user1, user2, user3, itd.
-    const username = `user${i}`;
-
-    // Ustalamy hasło (tu dla uproszczenia każde hasło to 'pass123')
-    const password = 'pass123';
-
-    // Dodajemy wiersz do zawartości CSV (oddzielamy dane przecinkiem)
-    csvContent += `${username},${password}\n`;
-}
-
-// Funkcja zapisująca dane do pliku
 fs.writeFile(outputFile, csvContent, (err) => {
     if (err) {
-        // Jeśli wystąpi błąd, wyświetlamy go w konsoli
         console.error('Błąd zapisu pliku:', err);
     } else {
-        // Jeśli zapis się uda, informujemy o lokalizacji pliku
         console.log(`Plik został zapisany: ${outputFile}`);
     }
 });
 ```
-
-## 📝 Dodatkowe materiały
-
-[Eloquent Javascript](https://eloquentjavascript.net/)

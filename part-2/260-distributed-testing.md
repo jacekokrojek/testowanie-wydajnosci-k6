@@ -1,4 +1,5 @@
 # Budowanie rozproszonego środowiska do testów
+
 W czasie pracy nad skyptami k6, test uruchamiamy na jednej maszynie. Na potrzeby przeprowadzenia testów możliwości jednej maszyny mogą być jednak niewystarczające. W takim przypadku będziemy musieli oprzeć się na rozwiązaniu, które pozwoli uruchomić testy na większej liczbie maszyn. 
 
 Mamy do wybory kilka komercyjnych serwisów takich jak:
@@ -6,9 +7,55 @@ Mamy do wybory kilka komercyjnych serwisów takich jak:
 * Azure Load Testing
 * Red Line 13
 
-Jeśli nie chcemy z nich korzystać możemy z nich skorzystać możemy również zbudować własne środowisko do testów k6 oparte o Kubernetes (k8s).
+Jeśli nie chcemy z nich korzystać możemy z nich skorzystać możemy również zbudować własne środowisko do testów k6 oparte o Kubernetes (k8s). Mamy dwie możliwości:
 
-## Przygotowanie środowiska
+* Uruchamianie testów na dedykowanych serwerach
+* Uruchamianie testów w Kubernetes
+
+## Środowisko
+
+Budując środowisko do testów na dedykowanych serwerach musimy w pierwszej kolejności zadbać o dostrojenie ich konfiguracji. Najważniejszymi parametrami o jakie należy zadbać to
+
+* maksymalna liczba otwartych plików (plikami są też połączenia)
+* zakres otwatych portów
+* reużywanie połączeń tcp
+
+Szczegółowe informacje na ten temat znajdziesz pod linkami
+* https://grafana.com/docs/k6/latest/set-up/fine-tune-os/
+* https://grafana.com/docs/k6/latest/testing-guides/running-large-tests/#os-fine-tuning
+
+K6 umożliwia podzielenie obciążenia pomiędzy wykorzystywane maszyny korzystając z dedykowanych opcji. Przykład poniżej pokazuje jak podzielić obciążenie na kilka maszyn.
+
+```
+## podział obciążenia my-script.js na dwie maszyny
+k6 run --execution-segment "0:1/2"   --execution-segment-sequence "0,1/2,1" my-script.js
+k6 run --execution-segment "1/2:1"   --execution-segment-sequence "0,1/2,1" my-script.js
+
+## podział obciążenia my-script.js na trzy maszyny
+k6 run --execution-segment "0:1/3"   --execution-segment-sequence "0,1/3,2/3,1" my-script.js
+k6 run --execution-segment "1/3:2/3" --execution-segment-sequence "0,1/3,2/3,1" my-script.js
+k6 run --execution-segment "2/3:1"   --execution-segment-sequence "0,1/3,2/3,1" my-script.js
+
+## podział obciążenia my-script.js na cztery maszyny
+k6 run --execution-segment "0:1/4"     --execution-segment-sequence "0,1/4,2/4,3/4,1" my-script.js
+k6 run --execution-segment "1/4:2/4"   --execution-segment-sequence "0,1/4,2/4,3/4,1" my-script.js
+k6 run --execution-segment "2/4:3/4"   --execution-segment-sequence "0,1/4,2/4,3/4,1" my-script.js
+k6 run --execution-segment "3/4:1"     --execution-segment-sequence "0,1/4,2/4,3/4,1" my-script.js
+```
+
+Rozwiązanie to ma jednak kilka ograniczeń:
+
+* Start instancji nie będzie zsynchronizowany. Możesz poprawić synchronizajcję startując test z opcjami `--paused --address localhost:6565` a następnie wystartować je korzystając z k6 REST API np. komendą `curl -X PATCH http://localhost:6565/v1/status -H "Content-Type: application/json" -d '{"paused": false}'`
+
+* Każda instancja k6 ocenia Thresholds (progi) niezależnie — bez uwzględniania wyników pozostałych instancji. Aby je wyłączyć, użyj flagi --no-thresholds.
+
+* k6 raportuje metryki indywidualnie dla każdej instancji. W zależności od sposobu przechowywania wyników testów obciążeniowych, może być konieczna ręczna agregacja metryk, aby prawidłowo je obliczyć. 
+
+* Funkcje `setup()` oraz `tearDown()` wykonają się na każdej instancji.
+
+Problemów tych pozbawiony jest sposób druga opcja druka opcja budowy rozproszonego środowiska testowego.
+
+## Przygotowanie środowiska k8s
 
 Na potrzeby budowy środowiska do testów rozproszonych k6 będziesz potrzebował dostępu do klastra k8s. Skonfiguruj odpowiednio narzędzie `kubectl` aby mieć do niego dostęp.
 

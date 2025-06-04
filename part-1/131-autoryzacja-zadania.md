@@ -5,21 +5,6 @@
 * Przygotuj zapytanie zgodnie z opisem https://httpbin.org/#/Auth/get_basic_auth__user___passwd_ 
 * Prześlij nazwę użytkownika oraz hasło w adresie URL tak aby je poprawnie uwiarzytelnić
 
-## Autoryzacja klienta z Client credentials – pobranie tokenu dostępu
-
-**Opis zadania:**
-
-* Przygotuj zapytanie POST do endpointa protokołu OpenID Connect w Keycloak, aby uzyskać token umożliwiający dostęp do API.
-* W treści żądania prześlij dane zgodnie z wymaganiami
-    * Należy wysłać zapytanie POST na adres `https://{hostname}/realms/sample-app/protocol/openid-connect/token`
-    * Dane należy przesłać w formacie `application/x-www-form-urlencoded`, 
-    * Ustaw "client_id" : "client-pat", "grant_type": "client_credentials" oraz odpowiedni "client_secret" 
-    * Aby pobrać secret zaloguj się jako admin/admin, wybieramy realm: sample-app, wybieramy Clients > client-pat > Creadentials, skopiuj Client Secret 
-
-**Kontekst:**
-To zapytanie pozwala na uzyskanie tokenu dostępu, który jest niezbędny do autoryzacji wszystkich pozostałych żądań API Keycloak. Token zwracany jest w odpowiedzi jako JSON i powinien zostać umieszczony w nagłówku `Authorization: Bearer {token}` przy kolejnych żądaniach.
-
-
 ## Wysłanie zapytania GET – pobranie listy użytkowników
 
 **Opis zadania:**
