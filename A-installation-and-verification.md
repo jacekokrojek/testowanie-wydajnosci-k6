@@ -15,8 +15,8 @@ opcjonalnie
 ## Weryfikacja połączeń
 
 Sprawdź czy możesz odwiedzić witryny 
-* https://<ip> (zignoruj informacje o niebezpiecznym certyfikacie)
-* http://<ip>:3000
+* https://{podane-ip} (zignoruj informacje o niebezpiecznym certyfikacie)
+* http://{podane-ip}:3000
 * https://www.keycloak.org/
 * https://httpbin.org/
 
