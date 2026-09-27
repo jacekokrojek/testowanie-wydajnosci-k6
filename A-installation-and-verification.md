@@ -6,8 +6,8 @@ Przed warsztatem z testowania w k6 zainstaluj poniższe komponenty a także spra
 * [Visual Studio Code](https://code.visualstudio.com/)
 * [Grafana k6](https://grafana.com/docs/k6/latest/set-up/install-k6/)
 * [Google Chrome](https://www.google.com/chrome/)
-* [Dodatek Grafana k6 Browser Record](https://chromewebstore.google.com/search/grafana-k6-browser-record) 
 * [k6 Studio](https://grafana.com/docs/k6/latest/k6-studio/)
+* [Node JS](https://nodejs.org/en/download)
 
 opcjonalnie
 * [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
