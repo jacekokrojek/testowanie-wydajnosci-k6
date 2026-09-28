@@ -85,6 +85,23 @@ export default function () {
 
 Korzystanie ze „standardowych” struktur i bibliotek JavaScript niesie ze sobą nieoptymalne i często wysokie wykorzystanie zasobów. We wcześniejszych przykładach każdy wirtualny użytkownik k6 próbował wczytać własną kopię danych, co może doprowadzić do wyczerpania dostępnej pamięci i zatrzymania testu. Rozwiązaniem jest wykorzystanie `SharedArray`, które możemy połączyć z wcześniej omawianymi sposobami pobierania danych.
 
+Załadujemy dane użytkowników z pliku JSON i wybierzemy losowego użytkownika.
+
+```javascript
+import { SharedArray } from 'k6/data';
+
+const data = new SharedArray('users', function () {
+  return JSON.parse(open('./users.json'));
+});
+
+export default function () {
+  const user = data[Math.floor(Math.random() * data.length)];
+  const serialized = JSON.stringify(user);
+}
+```
+
+Możesz rónież pobierać dane z pliku CSV
+
 ```javascript
 import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { SharedArray } from 'k6/data';
@@ -100,14 +117,14 @@ export default function () {
 }
 ```
 
-Załadujemy dane użytkowników z pliku JSON i wybierzemy losowego użytkownika.
+> Więcej bibliotek możesz znaleźc na stroni [JS Libraries](https://jslib.k6.io/)
 
 ## Generowanie danych
 
 W materiale [Wprowadzenie do JavaScript](../A-podstawy-JS.md) omówiliśmy typowe sposoby generowania danych testowych w JavaScript. Poniżej znajdziesz przykład wykorzystania zdalnego modułu i jego funkcji do generowania danych, które są podobne do danych rzeczywistych.
 
 ```javascript
-import faker from 'https://cdnjs.cloudflare.com/ajax/libs/Faker/3.1.0/faker.min.js';
+import faker from "k6/x/faker";
 
 export const generateSubscriber = () => ({
   name: `SUBSCRIPTION_TEST - ${faker.name.firstName()} ${faker.name.lastName()}`,
@@ -118,7 +135,7 @@ export const generateSubscriber = () => ({
 });
 ```
 
-https://github.com/farhanlabib/k6-faker-load-testing
+Więcej informacji znajdziesz na stronie [xk6-faker](https://github.com/grafana/xk6-faker)
 
 > W kolejnych lekcjach omówimy inny sposób pobrania biblioteki: https://dev.to/k6/performance-testing-with-generated-data-using-k6-and-faker-2e
 

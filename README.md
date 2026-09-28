@@ -4,7 +4,7 @@ W repozytorium znajdziesz materiały, które pomogą Ci rozpocząć pracę z nar
 
 ## Przygotowanie
 
-Przed warsztatem zapoznaj się z [instrukcją](./A-installation-and-verification.md) zawierającą informacje o wymaganym oprogramowaniu oraz połączeniach. Zachęcam też do zapoznania się z [podstawami języka JavaScript](./B-podstawy-JS.md), które pomogą w zrozumieniu materiału oraz pisaniu własnych testów. Jeśli planujesz budowanie rozproszonego środowiska do testów zapoznaj się też z podstawami pracy w z [Docker](/C-podstawy-docker.md) i w [środowisku k8s](./D-podstawy-k8s.md).
+Przed warsztatem zapoznaj się z [instrukcją](./A-installation-and-verification.md) zawierającą informacje o wymaganym oprogramowaniu oraz połączeniach. Zachęcam też do zapoznania się z [podstawami języka JavaScript](./B-podstawy-JS.md) oraz [podstawami HTTP](./E-http.md), które pomogą w zrozumieniu materiału oraz pisaniu własnych testów. Jeśli planujesz budowanie rozproszonego środowiska do testów zapoznaj się też z podstawami pracy w z [Docker](/C-podstawy-docker.md) i w [środowisku k8s](./D-podstawy-k8s.md). 
 
 ## Agenda
 
