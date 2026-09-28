@@ -1,23 +1,32 @@
 
-# Autentykacja HTTP w praktyce: Teoria i implementacja w k6
+# Autentykacja HTTP w praktyce: teoria i implementacja w k6
 
 ## Wprowadzenie
 
-Autentykacja (uwierzytelnianie) to proces weryfikacji tożsamości klienta, który próbuje uzyskać dostęp do zasobów serwera. W codziennym życiu spotykamy się z autoryzacją niemal na każdym kroku. W przypadku API opartych autoryzacja odbywa się poprzez przesyłanie danych uwierzytelniających w odpowiednim elemcie zapytania. W tym artykule omówimy najpopularniejsze metody autentykacji HTTP oraz pokażemy, jak zaimplementować je w k6.
+Autentykacja (uwierzytelnianie) to proces weryfikacji tożsamości klienta, który próbuje uzyskać dostęp do zasobów serwera. W codziennym życiu spotykamy się z autoryzacją niemal na każdym kroku. W przypadku API autoryzacja odbywa się poprzez przesyłanie danych uwierzytelniających w odpowiednim elemencie zapytania. W tym artykule omówimy najpopularniejsze metody autentykacji HTTP oraz pokażemy, jak zaimplementować je w k6.
 
-## Popularne typy uwierzytelniania 
+> Większość testów nie odbywa się na środowiskach produkcyjnych i ujawnienie haseł lub innych wrażliwych danych nie narusza zasad bezpieczeństwa. Dobrą praktyką jest jednak nie przechowywwanie takich danych w kodzie skryptu. Zamiast tego wykorzystuj zmienne środowiskowe, np. `__ENV.CLIENT_SECRET` lub plik ```.env```, z któego dane będą wczytane przy starcie testów.
+
+```text
+HOSTNAME=localhost
+CLIENT_ID=client-pat
+CLIENT_SECRET=super-secret-value
+```
+
+## Popularne typy uwierzytelniania
+
 ### Basic Authentication
 
-Basic Authentication polega na przesłaniu danych uwierzytelniających w formacie `username:password`, zakodowanych w Base64 i umieszczonych w nagłówku `Authorization`.   
+Basic Authentication polega na przesłaniu danych uwierzytelniających w formacie `username:password`, zakodowanych w Base64 i umieszczonych w nagłówku `Authorization`.
 
 **Przykładowy nagłówek**:
-```
+```http
 Authorization: Basic dXNlcjpwYXNz
 ```
 
-Jest to prostsza forma autentykacji, która do wdrożenia potrzebuje często tylko drobnej korekty konfiguracji serwera lub load balancera. Aby były bezpieczna wymaga połączenia przez HTTPS — w przeciwnym razie dane można łatwo przechwycić. Ten typ autoryzacji spotkamy dziś przede wszystkim na środowiskach testowych. We wdrożeniach produkcujnych stosuje się bardziej złożone mechanizmy autoryzacji.
+Jest to prostsza forma autentykacji, która do wdrożenia często wymaga tylko drobnej korekty konfiguracji serwera lub load balancera. Aby była bezpieczna, wymaga połączenia przez HTTPS — w przeciwnym razie dane można łatwo przechwycić. Ten typ autoryzacji spotkamy dziś przede wszystkim na środowiskach testowych. W wdrożeniach produkcyjnych stosuje się bardziej złożone mechanizmy autoryzacji.
 
-W k6 dane potrzebne do autentykacji możemy zakodować jak w przykładzie poniżej. 
+W k6 dane potrzebne do autentykacji możemy zakodować jak w przykładzie poniżej.
 
 ```javascript
 import http from 'k6/http';
@@ -25,43 +34,43 @@ import encoding from 'k6/encoding';
 import { check } from 'k6';
 
 export default function () {
-    const username = 'testuser';
-    const password = 'testpass';
-    const credentials = `${username}:${password}`;
-    const encodedCredentials = encoding.b64encode(credentials);
+  const username = 'testuser';
+  const password = __ENV.TEST_PASSWORD || 'testpass';
+  const credentials = `${username}:${password}`;
+  const encodedCredentials = encoding.b64encode(credentials);
 
-    const options = {
-        headers: {
-            Authorization: `Basic ${encodedCredentials}`,
-        },
-    };
+  const options = {
+    headers: {
+      Authorization: `Basic ${encodedCredentials}`,
+    },
+  };
 
-    const res = http.get(`https://httpbin.org/basic-auth/${username}/${password}`, options);
+  const res = http.get(`https://httpbin.org/basic-auth/${username}/${password}`, options);
 
-    check(res, {
-        'status is 200': (r) => r.status === 200,
-    });
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+  });
 }
 ```
 
-Warto pamiętać, że protokuł HTTP umożliwia uwierzytelnienie się metodą Basic poprzez przesłanie danych jak pokazuje to przykład poniżej.
+Warto pamiętać, że protokół HTTP umożliwia uwierzytelnienie się metodą Basic poprzez przesłanie danych, jak pokazuje to poniższy przykład.
 
 ```javascript
-  const credentials = `${username}:${password}`;
-  const url = `https://${credentials}@httpbin.org/basic-auth/${username}/${password}`;
-  let res = http.get(url);
-``` 
+const credentials = `${username}:${password}`;
+const url = `https://${credentials}@httpbin.org/basic-auth/${username}/${password}`;
+const res = http.get(url);
+```
 
 ### Bearer Token
 
-Bearer Token to sposób autoryzacji, w którym klient zamiast hasła i nazwy użytkownik a przesyła token.
+Bearer Token to sposób autoryzacji, w którym klient zamiast hasła i nazwy użytkownika przesyła token.
 
 **Przykładowy nagłówek**:
-```
+```http
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsIn...
 ```
 
-Token może być dowolnym ciągiem znaków jednak często wykorzystywanym formatem jest JWT.
+Token może być dowolnym ciągiem znaków, jednak często wykorzystywanym formatem jest JWT.
 
 ### JWT
 
@@ -77,7 +86,7 @@ JWT składa się z **trzech części**, oddzielonych kropkami (`xxxxx.yyyyy.zzzz
 }
 ```
 
-* Danych (tzw. *claims*) np.:
+* Danych (tzw. *claims*), np.:
 ```json
 {
   "sub": "1234567890",
@@ -87,8 +96,8 @@ JWT składa się z **trzech części**, oddzielonych kropkami (`xxxxx.yyyyy.zzzz
 }
 ```
 
-* Podpisu wygenerowanego przy pomocy algorytmu wskazanego w nagłówku, np.
-```
+* Podpisu wygenerowanego przy pomocy algorytmu wskazanego w nagłówku, np.:
+```text
 HMACSHA256(base64UrlEncode(header) + "." + base64UrlEncode(payload), secret)
 ```
 
@@ -98,7 +107,9 @@ W k6 możesz rozkodować dane przesłane w tokenie. Pokazuje to przykład poniż
 import encoding from 'k6/encoding';
 
 const parts = token.split('.');
-const content  = JSON.parse(encoding.b64decode(parts[1].toString(), "rawstd", 's'))
+const payload = JSON.parse(
+  encoding.b64decode(parts[1].toString(), 'rawstd', 's')
+);
 ```
 
 ## Wprowadzenie do OAuth 2.0
@@ -112,28 +123,34 @@ OAuth 2.0 to protokół autoryzacji, który pozwala aplikacjom uzyskać dostęp 
 
 Właściciel zasobów to zazwyczaj użytkownik końcowy, który decyduje, czy dana aplikacja może uzyskać dostęp do jego danych. Klient to aplikacja, która chce uzyskać ten dostęp – może to być np. aplikacja mobilna Facebooka próbująca uzyskać dostęp do zdjęć użytkownika w serwisie Google Photos. Serwer autoryzacyjny jest odpowiedzialny za uwierzytelnienie użytkownika i wydanie odpowiednich tokenów, natomiast serwer zasobów przechowuje chronione dane i honoruje ważne tokeny dostępu.
 
-Autoryzacja może przybiegać w kilku wariantach, które w OAuth 2.0 nazywamy Grant Types (lub Flows). 
+Autoryzacja może przybierać kilka wariantów, które w OAuth 2.0 nazywamy grant types (lub flows).
 
 ### Client Credentials flow
 
-To najszybszy i najprostszy sposób autoryzacji w OAuth 2.0. Przeznaczony jest dla komunikacji serwer-serwer, bez udziału użytkownika końcowego. Aplikacja chcąca uzyskać dostęp do danych przesyła do serwera logowania swoje poświadczenia, podobnie jak w przypadku formularza. W odpowiedzi otrzymuje token, który zawiera informacje o zakresie dostępu. Mając token może wysłać zapytanie o potrzebne dane do właściwego serwera, korzystając z uwierzytalniania Bearer Token.
+To najszybszy i najprostszy sposób autoryzacji w OAuth 2.0. Przeznaczony jest dla komunikacji serwer-serwer, bez udziału użytkownika końcowego. Aplikacja chcąca uzyskać dostęp do danych przesyła do serwera logowania swoje poświadczenia, podobnie jak w przypadku formularza. W odpowiedzi otrzymuje token, który zawiera informacje o zakresie dostępu. Mając token, może wysłać zapytanie o potrzebne dane do właściwego serwera, korzystając z uwierzytelniania Bearer Token.
 
 ```javascript
 import http from 'k6/http';
 import { check } from 'k6';
 
 export default function () {
-    
-    const url = `https://${hostname}/realms/sample-app/protocol/openid-connect/token`;
-    const payload = {
-        grant_type: 'client_credentials',
-        client_id: 'client-pat',
-        client_secret: '...',
-    };
+  const hostname = __ENV.HOSTNAME || 'localhost';
+  const url = `https://${hostname}/realms/sample-app/protocol/openid-connect/token`;
 
-    const res = http.post(url, payload);
-    const json = JSON.parse(res.body);
-    console.log(json.access_token);
+  const payload = {
+    grant_type: 'client_credentials',
+    client_id: __ENV.CLIENT_ID || 'client-pat',
+    client_secret: __ENV.CLIENT_SECRET || '...',
+  };
+
+  const res = http.post(url, payload);
+
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+  });
+
+  const json = JSON.parse(res.body || '{}');
+  console.log(json.access_token);
 }
 ```
 
@@ -141,11 +158,11 @@ export default function () {
 
 ### Authorization Code Flow
 
-Mechanizm autoryzacji typu Authorization Code Flow to jeden z filarów protokołu OAuth 2.0. Składa się z większej liczby kroków niż Client Credentials ponieważ występuje w nim użytkownik końcowy. W procesie tym klient (np. aplikacja web), otrzyma kod autoryzacujny od serwerem autoryzacyjnego. Korzystając z niego będzie mógł pobierać dane serwerem zasobów w imieniu użytkownika.
+Mechanizm autoryzacji typu Authorization Code Flow to jeden z filarów protokołu OAuth 2.0. Składa się z większej liczby kroków niż `Client Credentials`, ponieważ występuje w nim użytkownik końcowy. W procesie tym klient (np. aplikacja web) otrzymuje kod autoryzacyjny od serwera autoryzacyjnego. Korzystając z niego, będzie mógł pobierać dane z serwera zasobów w imieniu użytkownika.
 
-Pierwszym krokiem jest przekierowanie użytkownika do endpointa autoryzacyjnego. Przykładowy URL wygląda następująco:
+Pierwszym krokiem jest przekierowanie użytkownika do endpointu autoryzacyjnego. Przykładowy URL wygląda następująco:
 
-```
+```http
 GET https://accounts.google.com/o/oauth2/v2/auth?
   ?response_type=code
   &client_id=CLIENT_ID
@@ -164,13 +181,13 @@ GET https://accounts.google.com/o/oauth2/v2/auth?
 
 Po autoryzacji użytkownika i wyrażeniu przez niego zgody, serwer autoryzacyjny przekierowuje przeglądarkę użytkownika z powrotem na `redirect_uri`, dodając do adresu **kod autoryzacyjny**:
 
-```
+```http
 GET https://client-app.com/callback?code=AUTH_CODE&state=xyz123
 ```
 
-Klient (np. backend aplikacji) wysyła teraz **żądanie POST** do endpointa tokenowego w celu wymiany kodu na access token:
+Klient (np. backend aplikacji) wysyła teraz **żądanie POST** do endpointu tokenowego w celu wymiany kodu na access token:
 
-```
+```http
 POST https://oauth2.googleapis.com/token
 Content-Type: application/x-www-form-urlencoded
 
@@ -201,15 +218,14 @@ Serwer autoryzacyjny weryfikuje dane, a następnie zwraca odpowiedź w formacie 
 
 Access token jest używany do autoryzowanego dostępu do zasobów użytkownika na serwerze zasobów:
 
-```
+```http
 GET https://openidconnect.googleapis.com/v1/userinfo
 Authorization: Bearer ACCESS_TOKEN
 ```
 
-Pokazany wyżej flow jest mniej bezpieczną wersją autoryzacji. W nowszych rozwiązaniach można spotkać wersję z tzw. Proof Key for Code Exchange (PKCE).
-Wymaga ona aby podczas inicjalizacji flow wygenerowany był code_verifier – losowy ciąg znaków. Z niego wylicza się code_challenge, który przesyłany jest w pierwszym zapytaniu wraz z informacją o metodzie kodowania. 
+Pokazany wyżej flow jest mniej bezpieczną wersją autoryzacji. W nowszych rozwiązaniach można spotkać wersję z tzw. Proof Key for Code Exchange (PKCE). Wymaga ona, aby podczas inicjalizacji flow wygenerowany był `code_verifier` – losowy ciąg znaków. Z niego wylicza się `code_challenge`, który przesyłany jest w pierwszym zapytaniu wraz z informacją o metodzie kodowania.
 
-```
+```http
 GET https://auth.server.com/authorize?
   response_type=code&
   client_id=client123&
@@ -219,9 +235,10 @@ GET https://auth.server.com/authorize?
   code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&
   code_challenge_method=S256
 ```
-W momencie wymiany kodu autoryzacyjnego na token klient musi przesłać oryginalny code_verifier. Serwer porównuje go z wyliczonym wcześniej code_challenge, co zabezpiecza przed użyciem kodu przez nieautoryzowane aplikacje.
 
-```
+W momencie wymiany kodu autoryzacyjnego na token klient musi przesłać oryginalny `code_verifier`. Serwer porównuje go z wyliczonym wcześniej `code_challenge`, co zabezpiecza przed użyciem kodu przez nieautoryzowane aplikacje.
+
+```http
 POST https://auth.server.com/token
 Content-Type: application/x-www-form-urlencoded
 

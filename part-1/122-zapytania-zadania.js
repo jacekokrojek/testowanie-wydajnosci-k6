@@ -8,29 +8,31 @@ export const options = {
 };
 
 function getOpenIdConfig(hostname) {
-  let res = http.get(`https://${hostname}/realms/sample-app/.well-known/openid-configuration`);
-  check(res, { "status is 200": (res) => res.status === 200 });
+  const res = http.get(`https://${hostname}/realms/sample-app/.well-known/openid-configuration`);
+  check(res, { 'status is 200': (r) => r.status === 200 });
   sleep(1);
 }
 
 export function authorize(hostname) {
-  
-    const url = `https://${hostname}/realms/sample-app/protocol/openid-connect/token`;
-    const payload =
-    {
-        grant_type: 'client_credentials',
-        client_id: 'client-pat',
-        client_secret: "WJmCgangJQYEttl2fQOvjdniGIJbHvWq"
-    }
+  const url = `https://${hostname}/realms/sample-app/protocol/openid-connect/token`;
+  const payload = {
+    grant_type: 'client_credentials',
+    client_id: __ENV.CLIENT_ID || 'client-pat',
+    client_secret: __ENV.CLIENT_SECRET || 'replace-me',
+  };
 
-    const res = http.post(url, payload);
-    let jsonResponse = res.json();
-    return jsonResponse.access_token
+  const res = http.post(url, payload);
+  check(res, {
+    'token endpoint responds 200': (r) => r.status === 200,
+  });
+
+  const jsonResponse = res.json();
+  return jsonResponse.access_token;
 }
 
-
 export default function () {
-  let hostname = "63.186.38.145"
+  const hostname = __ENV.HOSTNAME || '63.186.38.145';
   getOpenIdConfig(hostname);
-  let token = authorize(hostname);
+  const token = authorize(hostname);
+  console.log(`token length: ${token.length}`);
 }
