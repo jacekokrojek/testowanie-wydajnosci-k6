@@ -7,13 +7,13 @@ Pytania wprowadzające:
 
 ## Podstawowe informacje
 
-**k6** to narzędzie open-source służące do testowania wydajności. Umożliwia pisanie skryptów testowych w **JavaScript/ES6**, co pozwala łatwo modelować różne scenariusze użytkowników.
+**k6** to narzędzie open-source służące do testowania wydajności. Umożliwia pisanie skryptów testowych w **JavaScript/ES6/TypeScript**, co pozwala łatwo modelować różne scenariusze użytkowników.
 
-> W szybko zminiającym się ekosystemie JavaScript mamy kilka specyfikacji języka. k6 wykorzystuje silnik Goja (napisany w Go), który implementuje dużą część ECMAScript 5.1 i części ES6 (ECMAScript 2015). Z praktycznego punktu widzenia przyjmujemy, że skrypt k6 jest zgodny z ES6 (ECMAScript 2015). Najważniejsza różnica to brak obługi async/await.
+> k6 jest napisany w Go i wykorzystuje silnik JavaScript Sobek, będący forkiem projektu Goja. Sobek obsługuje nowoczesne funkcje ECMAScript (ES6+). k6 nie jest jednak środowiskiem Node.js ani przeglądarką, dlatego nie udostępnia automatycznie API charakterystycznych dla tych środowisk. k6 używa esbuild, żeby przetranspilować pliki .ts do JavaScriptu, a dopiero wynik wykonuje runtime. Jest to częściowe wsparcie TS
 
 ### Najważniejsze cechy k6:
 
-- składnia oparta na JavaScript
+- składnia oparta na JavaScript/TypeScript
 - uruchamianie testów lokalnie lub w chmurze (np. [k6 Cloud](https://k6.io/cloud))
 - generowanie metryk w czasie rzeczywistym
 - integracja z CI/CD
@@ -31,6 +31,7 @@ Skrypt w k6 to plik (moduł) JavaScript. Wymaganym elementem skryptu jest funkcj
 
 ```javascript
 import http from 'k6/http';
+import { check } from 'k6';
 
 export const options = {
   vus: 10,
@@ -124,9 +125,18 @@ export const options = {
 
 Ciekawą funcją k6 jest możliwość monitorowania metryk w czasie rzeczywistym a także wygenerowania raportu po zakończeniu testu. Możesz zrobić to ustawiając odpowiednio zminenne środowiskowe. Przykład uruchaomienia testu znajdziesz poniżej:
 
+W systemach z powłoką bash / zsh:
+
 ```bash
 K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run script.js
 ```
+
+W cmd.exe w systemie Windows:
+
+```cmd
+set "K6_WEB_DASHBOARD=true" && set "K6_WEB_DASHBOARD_EXPORT=html-report.html" && k6 run script.js
+```
+
 Więcej na ten temat pod linkiem https://grafana.com/docs/k6/latest/results-output/web-dashboard/
 
 

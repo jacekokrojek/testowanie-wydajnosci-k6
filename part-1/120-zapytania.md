@@ -114,14 +114,14 @@ export default function(){
 }
 ```
 
-Jeśli odpowiedź jest w formacie JSON możemy dodatkowo użyć `JSON.parse()` do przetworzenia jej z tekstu na obiekt JavaScript a dalej odwoływać się do jego pól. 
+Jeśli treść odpowiedzi jest w formacie JSON możemy użyć funckji `json()` do przetworzenia jej na obiekt JavaScript a dalej odwoływać się do jego pól. 
 
 ```javascript
 import http from 'k6/http';
 
 export default function(){
     let res = http.get('https://jsonplaceholder.typicode.com/posts/1')
-    let jsonResponse = JSON.parse(res.body);
+    let jsonResponse = res.json();
     console.log(`Tytuł: ${jsonResponse.title}`);
 }
 ```
@@ -167,5 +167,17 @@ if (!check(res, { 'status jest 200': (r) => r.status === 200 })) {
 }
 ```
 
+### Debugowanie skryptów
 
+Zamiast analizować problemy w terminalu można przekierować logowanie do pliku:
+
+```bash
+k6 run --log-output=file=./k6.log script.js
+```
+
+Możemy również zmienić format logów na `json` lub `raw`. Możemy również włączyć opcje logowania na poziomie protokołu HTTP poniższą opcją:
+
+```bash
+k6 run --http-debug=full script.js
+```
 

@@ -1,4 +1,3 @@
-
 # Obserwowalność testów: logi Nginx w Grafana Loki
 
 k6 po zakończonym teście pokazuje statystyki takie jak `http_req_duration` czy rozkład kodów odpowiedzi, ale to zawsze widok **z perspektywy klienta**. Kiedy testujemy np. rate limiting na Nginx (patrz rozdział o modelowaniu obciążenia), k6 powie Ci ile żądań dostało `429`, ale nie powie *dlaczego* akurat te, ani jak zachowywał się serwer w danym momencie. Żeby to zobaczyć, potrzebujemy logów serwera skorelowanych w czasie z przebiegiem testu — i tu przydaje się **Grafana Loki**.
@@ -6,6 +5,27 @@ k6 po zakończonym teście pokazuje statystyki takie jak `http_req_duration` czy
 ## Czym jest Loki
 
 Loki to system agregacji logów stworzony przez Grafana Labs, często opisywany jako *„Prometheus, ale dla logów”*. W przeciwieństwie do klasycznych rozwiązań (np. Elasticsearch), Loki **nie indeksuje pełnej treści logów** — indeksuje wyłącznie etykiety (labels) przypisane do strumienia logów, a samą treść przechowuje skompresowaną. Dzięki temu jest znacznie tańszy i szybszy przy dużych wolumenach danych, takich jak logi dostępu z Nginx generowane podczas testu obciążeniowego.
+
+```mermaid
+flowchart LR
+  subgraph sources["kontenery"]
+      nginx["nginx<br/><small>stdout: log JSON</small>"]
+      keycloak["Keycloak<br/><small>stdout: access log</small>"]
+  end
+  docker["Docker Engine<br/><small>przechwytuje logi kontenerów</small>"]
+  promtail["Promtail<br/><small>docker_sd_configs<br/>label: container, compose_service</small>"]
+  loki["Loki<br/><small>indeks: tylko etykiety</small>"]
+  grafana["Grafana<br/><small>Explore · LogQL</small>"]
+
+  nginx --> docker
+  keycloak --> docker
+  docker -->|"docker.sock · Engine API"| promtail
+  promtail -->|"push → :3100/loki/api/v1/push"| loki
+  loki -->|"LogQL query"| grafana
+
+  linkStyle 2 stroke:#C98A1D,stroke-width:3px
+  style docker stroke:#C98A1D,stroke-width:2px
+```
 
 Architektura składa się z trzech elementów:
 
@@ -95,6 +115,44 @@ count_over_time({container="nginx"} | json | status="429" [$__interval])
 ```
 
 Explore od razu przełączy się na widok wykresu – to nasze pierwsze zapytanie metryczne.
+
+### Szukanie jednego żądania w kilku kontenerach
+
+Dotąd filtrowaliśmy po polach JSON z logów nginx. Przy debugowaniu często chcemy znaleźć **jedno konkretne żądanie i zobaczyć je po obu stronach** – w nginx oraz w Keycloaku. Keycloak też potrafi logować każde żądanie HTTP (tzw. access log, włączany opcją `KC_HTTP_ACCESS_LOG_ENABLED`), a ponieważ Promtail zbiera logi wszystkich kontenerów, obie linie trafiają do Loki i możemy pobrać je jednym zapytaniem.
+
+Załóżmy, że skrypt k6 dopisuje do każdego żądania parametr `?id=sample-app-<numer>`. To samo żądanie wygląda w logach tak:
+
+nginx (JSON):
+
+```
+{"time":"2026-09-26T10:47:11+00:00","remote_addr":"83.30.43.237","request_method":"GET","request_uri":"/resources/8kf24/login/keycloak.v2/img/keycloak-logo-text.svg?id=sample-app-1","status":200,"request_time":0.012,"upstream_response_time":"0.011", ...}
+```
+
+Keycloak (zwykły tekst):
+
+```
+2026-09-26 10:47:11,196 INFO  [org.keycloak.http.access-log] (executor-thread-1) ip=83.30.43.237 method=GET uri="/resources/8kf24/login/keycloak.v2/img/keycloak-logo-text.svg?id=sample-app-1" status=200 bytes=7009 duration_ms=4
+```
+
+Log Keycloaka nie jest JSON-em, więc `| json` tu nie pomoże – potrzebujemy filtra działającego na surowym tekście linii. Zapytanie wygląda tak:
+
+```logql
+{container=~"nginx|keycloak"} |~ `[?&]id=sample-app-1(&|")`
+```
+
+Jak je czytać:
+
+- `{container=~"nginx|keycloak"}` – `=~` to dopasowanie etykiety wyrażeniem regularnym, więc selektor obejmuje oba kontenery naraz (zwykłe `=` wymaga jednej dokładnej wartości).
+- `|~` – filtr linii: zostają tylko linie pasujące do wyrażenia regularnego (szukanego w dowolnym miejscu linii). Backticki tworzą surowy ciąg, więc nie musimy escapować cudzysłowu.
+- `[?&]` – parametr w query stringu zaczyna się po `?` albo `&`. Dzięki temu `id` musi być całą nazwą parametru.
+- `id=sample-app-1` – szukana nazwa i wartość parametru.
+- `(&|")` – po wartości musi stać `&` (idzie kolejny parametr) albo `"` (koniec adresu – w obu logach URI jest w cudzysłowie).
+
+Dlaczego nie użyć prostszego `|= "id=sample-app-1"`? Bo taki filtr złapie też `client_id=sample-app-1` oraz `id=sample-app-10`, `id=sample-app-11` itd. Końcówka `(&|")` odcina dłuższe wartości. Żeby zamiast jednego numeru złapać dowolny, użyj `[?&]id=sample-app-\d+(&|")`.
+
+W wyniku dostaniesz dwie linie obok siebie. W nginx widać `request_time` i `upstream_response_time` (sekundy), a w Keycloaku `duration_ms` (milisekundy). Jeśli między nginx a Keycloakiem stoi Toxiproxy z dodanym opóźnieniem, różnica między tymi wartościami pokazuje, ile czasu „zjadła” sieć i proxy, a ile faktycznie zajęło samo przetwarzanie w Keycloaku.
+
+> Uwaga: adresy zasobów motywu (`/resources/<hash>/...`) mają hash zależny od wersji Keycloaka. Przy nieaktualnym hashu Keycloak odpowiada kodem `307` i przekierowuje na nowy adres **bez query stringa** – drugie żądanie nie ma wtedy `?id=...`, więc filtr go nie pokaże.
 
 ### Budowa metryk: count i average per kod odpowiedzi
 
