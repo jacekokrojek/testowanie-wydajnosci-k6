@@ -2,9 +2,14 @@ import http from 'k6/http';
 import { sleep, check } from 'k6';
 
 export const options = {
-  vus: 10,
-  duration: '30s',
-  insecureSkipTLSVerify: true,
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '60s', target: 250 },
+      { duration: '60s', target: 250 },
+      // { duration: '60s', target: 10 },
+      // { duration: '90s', target: 15 },
+    ],
 };
 
 function getOpenIdConfig(hostname) {
@@ -32,7 +37,8 @@ export function authorize(hostname) {
 
 export default function () {
   const hostname = __ENV.HOSTNAME || '63.186.38.145';
-  getOpenIdConfig(hostname);
+  //getOpenIdConfig(hostname);
   const token = authorize(hostname);
-  console.log(`token length: ${token.length}`);
+  // console.log(`token length: ${token.length}`);
+  // sleep(5)
 }
