@@ -10,12 +10,15 @@ Przed warsztatem zapoznaj się z [instrukcją](./A-installation-and-verification
 
 ### Część 1
 * [Wprowadzenie do k6](part-1/110-wprowadzenie.md)
+* [Cykl życia testu](part-1/113-cykl-zycia-testu.md)
+* [Monitoring z Loki](part-1/115-monitoring-loki.md)
 * [Zapytania i odpowiedzi HTTP](part-1/120-zapytania.md)
 * [Autoryzacja](part-1/130-autoryzacja.md)
-* [Praca z treścią html](part-1/170-html.md)
 * [Dane testowe](part-1/140-dane-testowe.md)
 * [Modularyzacja skryptów](part-1/150-modularyzacja.md)
 * [Modelowanie obciążenia](part-1/160-modelowanie-obciazenia.md)
+* [Praca z treścią HTML](part-1/170-html.md)
+* [Raportowanie](part-1/190-raportowanie.md)
 
 ### Część 2
 * [Prezentacja wyników testów](part-2/280-result-output.md)
