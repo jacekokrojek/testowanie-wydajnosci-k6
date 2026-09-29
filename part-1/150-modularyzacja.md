@@ -79,7 +79,21 @@ class UsersApiClient {
 
 ## Generowanie kodu klienta API
 
-Popularnym sposobem specyfikacji API jest standard OpenAPI. Jeśli testowana przez Ciebie usługa posiada tego typu specyfikację, możesz wygenerować klienta API automatycznie, korzystając z narzędzia [OpenAPI-to-k6](https://github.com/grafana/openapi-to-k6/). Z wygenerowanego kodu możesz skorzystać jak pokazuje to poniższy przykład.
+Popularnym sposobem specyfikacji API jest standard OpenAPI. Jeśli testowana przez Ciebie usługa posiada tego typu specyfikację, możesz wygenerować klienta API automatycznie, korzystając z narzędzia [OpenAPI-to-k6](https://github.com/grafana/openapi-to-k6/). 
+
+Do instalacji wykorzystaj komendę:
+
+```
+npm install -g @grafana/openapi-to-k6
+```
+
+Generowanie do wygenerowania kodu wykorzystaj polecenie
+
+```
+openapi-to-k6 open-api.json ./open-api --include-sample-script
+```
+
+Z wygenerowanego kodu możesz skorzystać jak pokazuje to poniższy przykład.
 
 ```javascript
 import { UsersClient } from './users.ts';

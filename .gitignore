@@ -6,3 +6,4 @@ sample-project
 plan.md
 .github
 .vscode
+**/**/.env

@@ -1,6 +1,5 @@
 1. Stwórz skrypt pobierający dane z losowego endpointu
 
-/clients
+/users
 /groups
 /roles
-/client-scopes

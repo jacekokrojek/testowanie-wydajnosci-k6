@@ -5,13 +5,7 @@
 
 Autentykacja (uwierzytelnianie) to proces weryfikacji tożsamości klienta, który próbuje uzyskać dostęp do zasobów serwera. W codziennym życiu spotykamy się z autoryzacją niemal na każdym kroku. W przypadku API autoryzacja odbywa się poprzez przesyłanie danych uwierzytelniających w odpowiednim elemencie zapytania. W tym artykule omówimy najpopularniejsze metody autentykacji HTTP oraz pokażemy, jak zaimplementować je w k6.
 
-> Większość testów nie odbywa się na środowiskach produkcyjnych i ujawnienie haseł lub innych wrażliwych danych nie narusza zasad bezpieczeństwa. Dobrą praktyką jest jednak nie przechowywwanie takich danych w kodzie skryptu. Zamiast tego wykorzystuj zmienne środowiskowe, np. `__ENV.CLIENT_SECRET` lub plik ```.env```, z któego dane będą wczytane przy starcie testów.
-
-```text
-HOSTNAME=localhost
-CLIENT_ID=client-pat
-CLIENT_SECRET=super-secret-value
-```
+> Większość testów nie odbywa się na środowiskach produkcyjnych i ujawnienie haseł lub innych wrażliwych danych nie narusza zasad bezpieczeństwa. Dobrą praktyką jest jednak nie przechowywwanie takich danych w kodzie skryptu. Zamiast tego wykorzystuj zmienne środowiskowe, np. `__ENV.CLIENT_SECRET`.
 
 ## Popularne typy uwierzytelniania
 

@@ -128,7 +128,9 @@ k6 potrafi wysyłać metryki w czasie rzeczywistym do systemów monitoringu, dzi
 W naszym środowisku szkoleniowym używamy **Prometheusa** (ma włączony odbiornik remote write), a wyniki oglądamy w Grafanie:
 
 ```bash
-K6_PROMETHEUS_RW_SERVER_URL=http://<host>:9090/api/v1/write K6_PROMETHEUS_RW_TREND_STATS="avg,p(95),max" k6 run -o experimental-prometheus-rw script.js
+K6_PROMETHEUS_RW_SERVER_URL="http://<host>:9090/api/v1/write"
+K6_PROMETHEUS_RW_TREND_STATS="min,avg,p(95),p(99),max" 
+k6 run -o experimental-prometheus-rw --tag testid=<nazwa-przebiegu> script.js
 ```
 
 Co warto wiedzieć:
