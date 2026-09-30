@@ -154,6 +154,32 @@ export default function () {
 
 Mechanizm autoryzacji typu Authorization Code Flow to jeden z filarów protokołu OAuth 2.0. Składa się z większej liczby kroków niż `Client Credentials`, ponieważ występuje w nim użytkownik końcowy. W procesie tym klient (np. aplikacja web) otrzymuje kod autoryzacyjny od serwera autoryzacyjnego. Korzystając z niego, będzie mógł pobierać dane z serwera zasobów w imieniu użytkownika.
 
+Poniższy diagram pokazuje wszystkie kroki opisane powyżej w jednym miejscu — od wygenerowania `code_verifier` po stronie klienta, aż po użycie access tokenu do pobrania zasobu.
+
+```mermaid
+sequenceDiagram
+    actor User as Użytkownik (przeglądarka)
+    participant Client as Klient (aplikacja)
+    participant Auth as Serwer autoryzacyjny
+    participant Res as Serwer zasobów
+
+    Client->>Client: generuje code_verifier<br/>oraz code_challenge = SHA256(code_verifier)
+    Client->>User: przekieruj do /authorize<br/>(code_challenge, state, redirect_uri)
+    User->>Auth: GET /authorize
+    Auth->>User: formularz logowania
+    User->>Auth: login + hasło, zgoda
+    Auth-->>User: redirect na redirect_uri<br/>?code=...&state=...
+    User->>Client: przekazanie code i state<br/>(poprzez redirect_uri)
+    Client->>Client: sprawdź, czy state<br/>zgadza się z wysłanym (CSRF)
+    Client->>Auth: POST /token<br/>(code, code_verifier, redirect_uri)
+    Auth->>Auth: SHA256(code_verifier) == code_challenge?
+    Auth-->>Client: access_token (+ refresh_token)
+    Client->>Res: GET /resource<br/>Authorization: Bearer access_token
+    Res-->>Client: dane zasobu
+```
+
+Kluczowy moment bezpieczeństwa to dwie linie w środku diagramu: `code_challenge` widać jawnie w pierwszym, publicznym żądaniu (krok 2), natomiast `code_verifier`, z którego ten `code_challenge` policzono, nigdy nie opuszcza klienta aż do momentu wymiany kodu na token (krok 9) — i to bezpośrednim, nieprzechwytywalnym przez przeglądarkę kanałem POST, a nie przez URL przekierowania.
+
 Pierwszym krokiem jest przekierowanie użytkownika do endpointu autoryzacyjnego. Przykładowy URL wygląda następująco:
 
 ```http
@@ -242,3 +268,6 @@ redirect_uri=https://client.app/callback&
 client_id=client123&
 code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
 ```
+
+### Diagram sekwencji — Authorization Code Flow z PKCE
+
