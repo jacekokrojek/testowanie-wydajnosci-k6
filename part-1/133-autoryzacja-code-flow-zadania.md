@@ -87,7 +87,7 @@ const returnedState = callbackUrl.searchParams.get('state') || '';
 
 ---
 
-## Krok 5 — wymiana kodu na token (linie 69–78)
+## Krok 5 — wymiana kodu na token
 
 W  zapytaniu `/realms/master/protocol/openid-connect/token` prześli `code` odczytany w poprzenim kroku
 
@@ -95,7 +95,7 @@ W  zapytaniu `/realms/master/protocol/openid-connect/token` prześli `code` odcz
 
 ---
 
-## Krok 6 — bezpieczne parsowanie odpowiedzi (linie 80–90)
+## Krok 6 — bezpieczne parsowanie odpowiedzi
 
 Odczytaj access token i sprawdź czy pozwala na dostęp do `/admin/realms/master`
 
