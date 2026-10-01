@@ -1,4 +1,64 @@
-Zasymulujemy logowanie do systemu z udziałem Keycloak.
+# Zasymulujemy logowanie do systemu z udziałem Keycloak.
+
+## Logowanie do konsoli administracyjnej
+
+Wejdź na stronę https://<ip>/. Otwórz narzędzia developerskie i przejdź do zakładki sieć aby móc obserwować ruch. Odśwież stronę. Zaloguj się do systemu. Przeanalizuj zapytania. Dokończ skrypt poniżej.
+
+```javascript
+import http from 'k6/http';
+import crypto from 'k6/crypto';
+import { check } from 'k6';
+import { URL } from 'https://jslib.k6.io/url/1.0.0/index.js';
+
+const baseUrl = __ENV.BASE_URL || 'https://52.59.132.57';
+const username = __ENV.KEYCLOAK_USERNAME || "admin";
+const password = __ENV.KEYCLOAK_PASSWORD || "admin";
+const redirectUri = `${baseUrl}/admin/master/console/`;
+
+export const options = {
+  insecureSkipTLSVerify: true,
+  vus: 1,
+  iterations: 1,
+  thresholds: {
+    checks: ['rate==1'],
+    http_req_failed: ['rate==0'],
+  },
+};
+
+export function adminLogin() {
+  if (!username || !password) {
+    throw new Error('Set KEYCLOAK_USERNAME and KEYCLOAK_PASSWORD environment variables.');
+  }
+
+  const homePage = http.get(`${baseUrl}/`);
+  check(homePage, {
+    'site opens the admin console': (response) =>
+      response.status === 200 && response.url.includes('/admin/master/console/'),
+  });
+
+  const verifier = crypto.sha256(crypto.randomBytes(32), 'base64rawurl');
+  const challenge = crypto.sha256(verifier, 'base64rawurl');
+  const state = crypto.sha256(crypto.randomBytes(32), 'hex');
+  const nonce = crypto.sha256(crypto.randomBytes(32), 'hex');
+  const authUrl = `${baseUrl}/realms/master/protocol/openid-connect/auth` +
+    `?client_id=security-admin-console` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&state=${state}&response_mode=query&response_type=code&scope=openid` +
+    `&nonce=${nonce}&code_challenge=${challenge}&code_challenge_method=S256`;
+
+  const loginPage = http.get(authUrl);
+  check(loginPage, {
+    'login page returns HTTP 200': (response) => response.status === 200,
+  });
+
+  const loginResponse = loginPage.submitForm({
+    formSelector: 'form',
+    fields: { username, password },
+  });
+}
+```
+
+
 
 ## Przygotowanie
 

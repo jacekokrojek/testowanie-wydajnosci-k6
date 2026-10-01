@@ -154,31 +154,34 @@ export default function () {
 
 Mechanizm autoryzacji typu Authorization Code Flow to jeden z filarów protokołu OAuth 2.0. Składa się z większej liczby kroków niż `Client Credentials`, ponieważ występuje w nim użytkownik końcowy. W procesie tym klient (np. aplikacja web) otrzymuje kod autoryzacyjny od serwera autoryzacyjnego. Korzystając z niego, będzie mógł pobierać dane z serwera zasobów w imieniu użytkownika.
 
-Poniższy diagram pokazuje wszystkie kroki opisane powyżej w jednym miejscu — od wygenerowania `code_verifier` po stronie klienta, aż po użycie access tokenu do pobrania zasobu.
+
+
+### Diagram sekwencji — klasyczny Authorization Code Flow bez PKCE (przykład Google)
+
+Poniższy diagram odpowiada opisowi poniżej — klient to tu **aplikacja server-side** (ma własny backend, może bezpiecznie przechowywać `client_secret`), nie SPA jak w przykładzie Keycloaka. Dzięki temu widać różnicę, o której mówiliśmy wcześniej: pierwsze przekierowanie (krok 2) jest tu prawdziwym żądaniem HTTP do backendu klienta, zakończonym odpowiedzią `302 Redirect` — a nie czymś, co dzieje się wyłącznie w JS w przeglądarce.
 
 ```mermaid
 sequenceDiagram
     actor User as Użytkownik (przeglądarka)
-    participant Client as Klient (aplikacja)
-    participant Auth as Serwer autoryzacyjny
-    participant Res as Serwer zasobów
+    participant Client as Klient (backend aplikacji)
+    participant Auth as Serwer autoryzacyjny (Google)
+    participant Res as Serwer zasobów (Google APIs)
 
-    Client->>Client: generuje code_verifier<br/>oraz code_challenge = SHA256(code_verifier)
-    Client->>User: przekieruj do /authorize<br/>(code_challenge, state, redirect_uri)
-    User->>Auth: GET /authorize
-    Auth->>User: formularz logowania
-    User->>Auth: login + hasło, zgoda
-    Auth-->>User: redirect na redirect_uri<br/>?code=...&state=...
-    User->>Client: przekazanie code i state<br/>(poprzez redirect_uri)
+    User->>Client: GET /login
+    Client-->>User: 302 Redirect do /o/oauth2/v2/auth<br/>(client_id, redirect_uri, scope, state)
+    User->>Auth: GET /o/oauth2/v2/auth?...
+    Auth->>User: formularz logowania + ekran zgody
+    User->>Auth: login, zgoda na dostęp
+    Auth-->>User: redirect na redirect_uri<br/>?code=AUTH_CODE&state=xyz123
+    User->>Client: GET /callback?code=AUTH_CODE&state=xyz123
     Client->>Client: sprawdź, czy state<br/>zgadza się z wysłanym (CSRF)
-    Client->>Auth: POST /token<br/>(code, code_verifier, redirect_uri)
-    Auth->>Auth: SHA256(code_verifier) == code_challenge?
+    Client->>Auth: POST /token<br/>(client_id, client_secret, code,<br/>grant_type=authorization_code, redirect_uri)
     Auth-->>Client: access_token (+ refresh_token)
-    Client->>Res: GET /resource<br/>Authorization: Bearer access_token
-    Res-->>Client: dane zasobu
+    Client->>Res: GET /v1/userinfo<br/>Authorization: Bearer access_token
+    Res-->>Client: dane użytkownika
 ```
 
-Kluczowy moment bezpieczeństwa to dwie linie w środku diagramu: `code_challenge` widać jawnie w pierwszym, publicznym żądaniu (krok 2), natomiast `code_verifier`, z którego ten `code_challenge` policzono, nigdy nie opuszcza klienta aż do momentu wymiany kodu na token (krok 9) — i to bezpośrednim, nieprzechwytywalnym przez przeglądarkę kanałem POST, a nie przez URL przekierowania.
+Różnice względem pierwszego diagramu: zamiast `code_challenge`/`code_verifier` klient uwierzytelnia się w kroku wymiany kodu na token wprost przez `client_secret` (bo — w przeciwieństwie do SPA — może go bezpiecznie trzymać po stronie serwera), a krok 2 (przekierowanie) faktycznie pojawia się w ruchu sieciowym jako osobna para żądanie/odpowiedź, a nie znika w kodzie JS przeglądarki.
 
 Pierwszym krokiem jest przekierowanie użytkownika do endpointu autoryzacyjnego. Przykładowy URL wygląda następująco:
 
@@ -245,6 +248,35 @@ Authorization: Bearer ACCESS_TOKEN
 
 Pokazany wyżej flow jest mniej bezpieczną wersją autoryzacji. W nowszych rozwiązaniach można spotkać wersję z tzw. Proof Key for Code Exchange (PKCE). Wymaga ona, aby podczas inicjalizacji flow wygenerowany był `code_verifier` – losowy ciąg znaków. Z niego wylicza się `code_challenge`, który przesyłany jest w pierwszym zapytaniu wraz z informacją o metodzie kodowania.
 
+Poniższy diagram pokazuje wszystkie kroki opisane powyżej w jednym miejscu — od wygenerowania `code_verifier` po stronie klienta, aż po użycie access tokenu do pobrania zasobu.
+
+```mermaid
+sequenceDiagram
+    actor User as Użytkownik (przeglądarka)
+    participant Client as Klient (aplikacja, np. SPA)
+    participant Auth as Serwer autoryzacyjny
+    participant Res as Serwer zasobów
+
+    User->>Client: GET / (otwarcie aplikacji)
+    Client-->>User: strona aplikacji (kod JS klienta)
+    Client->>Client: JS w przeglądarce generuje code_verifier<br/>oraz code_challenge = SHA256(code_verifier)
+    Client->>User: nawigacja do /authorize<br/>(code_challenge, state, redirect_uri)
+    Note over User,Client: Gdy Klient to SPA (jak nasz skrypt),<br/>te dwa kroki dzieją się w JS w przeglądarce<br/>— nie generują osobnych żądań HTTP
+    User->>Auth: GET /authorize
+    Auth->>User: formularz logowania
+    User->>Auth: login + hasło, zgoda
+    Auth-->>User: redirect na redirect_uri<br/>?code=...&state=...
+    User->>Client: przekazanie code i state<br/>(poprzez redirect_uri)
+    Client->>Client: sprawdź, czy state<br/>zgadza się z wysłanym (CSRF)
+    Client->>Auth: POST /token<br/>(code, code_verifier, redirect_uri)
+    Auth->>Auth: SHA256(code_verifier) == code_challenge?
+    Auth-->>Client: access_token (+ refresh_token)
+    Client->>Res: GET /resource<br/>Authorization: Bearer access_token
+    Res-->>Client: dane zasobu
+```
+
+Kluczowy moment bezpieczeństwa to dwie linie w środku diagramu: `code_challenge` widać jawnie w pierwszym, publicznym żądaniu (krok 2), natomiast `code_verifier`, z którego ten `code_challenge` policzono, nigdy nie opuszcza klienta aż do momentu wymiany kodu na token (krok 9) — i to bezpośrednim, nieprzechwytywalnym przez przeglądarkę kanałem POST, a nie przez URL przekierowania.
+
 ```http
 GET https://auth.server.com/authorize?
   response_type=code&
@@ -269,5 +301,25 @@ client_id=client123&
 code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
 ```
 
-### Diagram sekwencji — Authorization Code Flow z PKCE
+### Generowanie code_verifier, code_challenge, state i nonce w k6
 
+Do wygenerowania tych wartości w k6 służy moduł `k6/crypto`:
+
+```javascript
+import crypto from 'k6/crypto';
+
+const verifier = crypto.sha256(crypto.randomBytes(32), 'base64rawurl');
+const challenge = crypto.sha256(verifier, 'base64rawurl');
+const state = crypto.sha256(crypto.randomBytes(32), 'hex');
+const nonce = crypto.sha256(crypto.randomBytes(32), 'hex');
+```
+
+**`code_verifier`** — RFC 7636 wymaga losowego ciągu o długości 43–128 znaków, złożonego wyłącznie ze znaków `A-Z a-z 0-9 - . _ ~`. `crypto.randomBytes(32)` generuje 32 losowe bajty (256 bit) z bezpiecznego generatora liczb losowych, a `crypto.sha256(...)` je hashuje i koduje wynik jako `base64rawurl` (Base64 URL-safe, **bez** paddingu `=`). Wyjście SHA-256 to zawsze 32 bajty, co po takim kodowaniu daje dokładnie 43 znaki — czyli trafia w sam dolny limit długości z RFC. Sam krok haszowania nie jest wymagany przez specyfikację (wystarczyłoby zakodować losowe bajty bezpośrednio jako `base64rawurl`, bez SHA-256) — ale nie szkodzi: nadal losowy, nadal w dozwolonym alfabecie, nadal odpowiedniej długości.
+
+**`code_challenge`** — to już dosłowna implementacja wzoru z RFC 7636 dla `code_challenge_method=S256`:
+```
+code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
+```
+Stąd `crypto.sha256(verifier, 'base64rawurl')` — liczymy SHA-256 z samego `code_verifier` (jako tekst, nie jako surowe bajty) i kodujemy wynik tym samym sposobem co wcześniej.
+
+**`state` i `nonce`** — w przeciwieństwie do `code_verifier`, żaden standard (ani RFC 6749 dla `state`, ani OpenID Connect Core dla `nonce`) nie narzuca konkretnego formatu. Wymóg jest jeden: wartość ma być unikalna i trudna do odgadnięcia. Kodowanie `'hex'` (zamiast `'base64rawurl'`) jest tu wyborem czysto praktycznym — nie ma znaczenia bezpieczeństwa, po prostu nie wymaga żadnego dodatkowego escapowania przy wklejaniu do URL-a. Równie dobrze zamiast `sha256(randomBytes(32), 'hex')` można by użyć gotowego UUID (np. `uuidv4()` z biblioteki `k6-utils`) — k6 nie ma wbudowanego `crypto.randomUUID()`, więc wymagałoby to dodatkowego importu z `jslib.k6.io`, podczas gdy wersja z `k6/crypto` działa bez żadnych zależności.

@@ -62,15 +62,20 @@ Na potrzeby budowy środowiska do testów rozproszonych k6 będziesz potrzebowa�
 Następnie zainstaluj k6-operator, najłatwiej zrobisz to korzystając z narzędzia helm
 
 ```bash
-helm repo add k6 https://grafana.github.io/k6-operator/
+helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
-helm install k6-operator k6/k6-operator --namespace k6-operator --create-namespace
+helm install k6-operator grafana/k6-operator --namespace k6-operator --create-namespace
 ```
+
+> Sprawdź czy jesteś podłączony do klustra komendą `kubectl cluster-info dump`. Jesli nie wykonaj polecenie `aws eks update-kubeconfig --region eu-central-1 --name k6-workshop`
+
 ## 2. Parametryzacja testu
 Do przekazania skryptu do PODów wykonujących testy wykorzystamy mechanizm ConfigMap. To jeden z natywnych obiektów w Kubernetes, który umożliwia przechowywanie par klucz-wartość reprezentujących konfigurację aplikacji. Zamiast „twardo kodować” dane konfiguracyjne wewnątrz kontenera, można je oddzielić i wstrzykiwać do aplikacji dynamicznie w czasie uruchamiania lub działania.
 
+
 ```bash
-kubectl create configmap single-test --from-file test\single-test.js
+kubectl create namespace k6-demo
+kubectl create configmap single-test --from-file test\single-test.js -n k6-demo
 ```
 Polecenie to spowoduje utworzenie ConfigMap o nazwie single-test. Do tej ConfigMap zostanie dodany plik jako osobne pary klucz-wartość, gdzie:
 * nazwa klucza odpowiada nazwie pliku (bez ścieżki),
@@ -85,6 +90,12 @@ Jeśli projekt testowy składa się z kilku plików możesz wykorzystać polecen
 
 ## 3. Definiowanie zasobow 
 
+Utwórz namespace dla deploymentu
+
+```bash
+kubectl create namespace k6-demo
+
+```
 ```yaml
 # k6-resource.yml
 
@@ -126,31 +137,55 @@ kubectl apply -f k6-test.yaml
 
 Możemy obserwować działające kontenery poleceniem 
 ```bash
-kubectl get jobs
+kubectl get jobs -n k6-demo
 ```
-### Przekazywanie parametrów
+
+Jeśli zauważysz problemy pomocne w poszukiwaniu przyczyny problemów będą komendy
+
+```bash
+kubectl get pods -n k6-demo
+kubectl logs k6-sample-initializer-<id>  -n k6-demo -f
+```
+### Dodatkowe parametry
+
+Poniższy przykład pokazuje ja możemy przekazać dodatkowe opcje jaki i zmienne środowiskowe potrzebne do wykonania testu
 
 ```yaml
 apiVersion: k6.io/v1alpha1
 kind: TestRun
 metadata:
-  name: run-k6-with-vars
+  name: k6-sample
+  namespace: k6-demo
 spec:
-  parallelism: 4
+  parallelism: 2
+  separate: false
   script:
     configMap:
-      name: my-test
-      file: test.js
-  arguments: --tag testid=run-k6-with-args --log-format json
+      name: single-test
+      file: archive.tar
+  args:
+    - --tag
+    - testid=k6-sample
+    - --log-format
+    - json
+    - -o
+    - experimental-prometheus-rw
   runner:
+    image: grafana/k6:2.3.0
     env:
-      - name: MY_CUSTOM_VARIABLE
-        value: 'this is my variable value'
-    envFrom:
-      - configMapRef:
-          name: prometheus-config
-      - secretRef:
-          name: prometheus-secrets
+      - name: BASE_URL
+        value: 'https://52.59.132.57/'
+      - name: K6_PROMETHEUS_RW_SERVER_URL
+        value: 'http://52.59.132.57:9090/api/v1/write'
+      - name: K6_PROMETHEUS_RW_TREND_STATS
+        value: 'min,avg,p(95),p(99),max'
+    resources:
+      requests:
+        cpu: '500m'
+        memory: '512Mi'
+      limits:
+        cpu: '1'
+        memory: '1Gi'
 ```
 
 Parametry w sekcji envFrom zdefiniujemy jak w przykładzie poniżej
@@ -191,6 +226,8 @@ spec:
       file: test.js
   arguments: -o experimental-prometheus-rw
 ```
+
+kubectl delete -f k6-test.yaml
 
 Więcej informacji znajdziesz pod linkiami
 * [https://github.com/javaducky/demo-k6-operator](https://github.com/javaducky/demo-k6-operator)

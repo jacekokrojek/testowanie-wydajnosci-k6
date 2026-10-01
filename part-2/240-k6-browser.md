@@ -48,6 +48,17 @@ K6_BROWSER_HEADLESS=false k6 run script.js
 
 Warto zapoznać się również z innymi opcjami wspieranymi przez moduł [`k6/browser`](https://grafana.com/docs/k6/latest/using-k6-browser/options/) a także opcjami jakie możesz skonfigurować wywołując fukncję [`newPage()`](https://grafana.com/docs/k6/latest/javascript-api/k6-browser/newpage/).
 
+Jeśli testujesz stronę bez podpisanego certyfikatu ustaw odpowiednią zmienną:
+
+```
+K6_BROWSER_ARGS="ignore-certificate-errors"
+```
+lub  ustaw odpowiednio kontekst przeglądarki
+```
+const context = await browser.newContext({ ignoreHTTPSErrors: true });
+const page = await context.newPage();
+
+```
 ## Interakcja ze elementami strony
 
 API k6/browser udostępnia szereg metod i klas do interakcji z przeglądarką. Dzięki nim m.in. zasymulujesz kliknięcie, wypełnianie formularzy, czy też pobieranie treści strony. Listę wszystkich możliwości znajdziesz w dokumentacji obiektów [Page](https://grafana.com/docs/k6/latest/javascript-api/k6-browser/page/) oraz [Locator](https://grafana.com/docs/k6/latest/javascript-api/k6-browser/locator/)
@@ -79,3 +90,5 @@ export default async function () {
 }
 ```
 W przykładzie powyżej pokazałem też jak odpowiednio synchronizować się ze zdarzeniami w przeglądarce. Konstrukcja `await Promise.all([page.waitForNavigation(), submitButton.click()])` pozwala nam jednoczesnie zainicjować kliknięcie przycisku i zacząć czekać na zakończenie nawigacji. Jest to kluczowe, aby poczekać na załadowanie strony przed kolejnymi akcjami. Używamy tu też asynchrnicznej wersji funkcji `check` z modułu k6-utils.
+
+

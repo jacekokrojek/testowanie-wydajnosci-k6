@@ -24,4 +24,12 @@ export let options = {
 };
 ```
 
+Jeśli chcesz wymagać braku wszystkich nieoczekiwanych odpowiedzi i błędów HTTP, najprościej użyć:
+
+```javascript
+thresholds: {
+  http_req_failed: ['rate == 0'],
+},
+```
+
 Thresholdy pozwalają na wiele więcej a informacje o nich znajdziesz na stronie [Thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)
