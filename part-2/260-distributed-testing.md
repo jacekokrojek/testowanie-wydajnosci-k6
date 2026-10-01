@@ -148,7 +148,11 @@ kubectl logs k6-sample-initializer-<id>  -n k6-demo -f
 ```
 ### Dodatkowe parametry
 
-Poniższy przykład pokazuje ja możemy przekazać dodatkowe opcje jaki i zmienne środowiskowe potrzebne do wykonania testu
+Poniższy przykład pokazuje ja możemy przekazać dodatkowe opcje jaki i zmienne środowiskowe potrzebne do wykonania testu oraz importowanie pliku archive
+
+```
+kubectl create configmap single-test --from-file=archive=archive.tar -n k6-demo
+```
 
 ```yaml
 apiVersion: k6.io/v1alpha1
@@ -162,7 +166,7 @@ spec:
   script:
     configMap:
       name: single-test
-      file: archive.tar
+      file: archive
   args:
     - --tag
     - testid=k6-sample
