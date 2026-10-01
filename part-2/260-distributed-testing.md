@@ -81,9 +81,11 @@ Polecenie to spowoduje utworzenie ConfigMap o nazwie single-test. Do tej ConfigM
 * nazwa klucza odpowiada nazwie pliku (bez ścieżki),
 * wartością każdego klucza będzie zawartość danego pliku.
 
-Możesz sprawdzić jaką wartość ma obiekt configMap poleceniem
+Możesz sprawdzić jaką wartość ma obiekt configMap lub usunąć ją jeśli chcesz zaktalizować  skrypt poleceniami:
+
 ```bash
   kubectl describe configmap single-test
+  kubectl delete configmap single-test -n k6-demo
 ```
 
 Jeśli projekt testowy składa się z kilku plików możesz wykorzystać polecenie [Archive](https://grafana.com/docs/k6/latest/reference/archive/) do spakowania skryptów do pliku tar lub wykorzysać np. narzędzie [Rollup]](https://github.com/grafana/k6-rollup-example) do zagregowania potrzebnych skryptów do jednego pliku.
